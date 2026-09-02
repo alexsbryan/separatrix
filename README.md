@@ -63,6 +63,8 @@ a pass says what it is worth:
 | `client.py` | OpenAI-compatible `/v1/chat/completions` over stdlib urllib. Reads `served` from the **response**. |
 | `agent.py` | `Agent` — an identity and a genome that is a sentence. `Responder` — the only path to a model; owns the cache, watches what served. |
 | `arenas/evolution.py` | Selection on strategy text. Fitness is a function of the **config**, so sweeping a coordinate sweeps the incentive. |
+| `arenas/diffusion.py` | A claim propagates; each agent retells what it *heard*; the judge scores every hop against the original source. A reputation norm can break the chain, and its threshold is the coordinate. |
+| `arenas/replay.py` | A fixed scenario set decided under a policy. No population, no model — the `canon replay` shape. |
 | `sweep.py` | `Search` — the decider — plus `sweep` (pays for samples) and `bracket_from_records` (replays them free). Noise-floor bisection, cost forecast, `Bracket`. |
 | `__main__.py` | `sep replay` and `sep bracket` — both re-derive with no model and no endpoint. |
 
@@ -167,7 +169,29 @@ one. They exist because the alias defect was invisible to every offline test
 that could have been written — it only appears when a real server answers and
 reports what it actually used.
 
-Not yet: the diffusion and replay arenas, `MesaArena`.
+## What an institution costs
+
+The diffusion arena measures the thing that makes two institutions comparable
+instead of both merely "working" — honest reach lost per unit of fabrication
+suppressed:
+
+```
+threshold   TRUE  FALSE  suppressed  honest cost  cost/unit
+      0.3   2.50   1.50        3.50         2.50       0.71
+      0.5   1.50   1.50        3.50         3.50       1.00
+      0.7   1.50   0.25        4.75         3.50       0.74
+```
+
+Two properties worth knowing before designing one. A **global** reputation
+penalises an agent for *relaying* something ungrounded, not only for inventing
+it, so honest agents pay — and at threshold 0.5 this one costs exactly as much
+honest reach as the fabrication it suppresses. And with **no persona variation**
+it is not selective at all: when every agent transmits identically, a per-agent
+norm has nothing to tell them apart with, and it strangles fact and fabrication
+equally. Both are tested, because they are properties of the design rather than
+bugs in it.
+
+Not yet: `MesaArena`, and the sandbox examples ported across.
 
 ## Licence
 

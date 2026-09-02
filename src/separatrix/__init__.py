@@ -18,7 +18,8 @@ from .judge import (BaseJudge, BiasResult, Judge, LabeledCase, Tier, Validated,
                     Validation)
 from .journal import Journal, Provenance, Run, read_records, replay
 from .agent import Agent, Responder
-from .arenas import Evolution, llm_rewrite
+from .arenas import (Claim, Diffusion, Evolution, Replay, Reputation, Scenario,
+                     llm_rewrite)
 from .client import Chat, ChatError, Completion, strip_think
 from .judges import FoldJudge, ProcessJudge
 from .judges import ProcessResult
@@ -38,6 +39,7 @@ __all__ = [
     "FoldJudge", "ProcessJudge", "ProcessResult",
     "Chat", "Completion", "ChatError", "strip_think",
     "Agent", "Responder", "Evolution", "llm_rewrite",
+    "Diffusion", "Claim", "Reputation", "Replay", "Scenario",
     "Arena", "Coordinate", "Outcome", "Budget", "Forecast", "Bracket", "Search",
     "sweep", "bracket_from_records",
     "Journal", "Provenance", "Run", "replay", "read_records",
