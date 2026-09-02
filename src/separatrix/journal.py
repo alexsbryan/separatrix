@@ -198,12 +198,29 @@ class Run:
         """The model this run's numbers came from, or why that is unknown."""
         return (self.header.get("provenance") or {}).get("served", "")
 
+    @property
+    def is_sweep(self) -> bool:
+        """A sweep journals SAMPLES and a bracket, not individual rulings.
+
+        Folding one as though it were a plain run reports NEVER_RAN over two
+        hundred recorded responses, which is true of the ruling records and
+        false about the run. A fold has to describe what the journal holds.
+        """
+        return any(r.get("t") == "sample" for r in self.other)
+
+    @property
+    def bracket(self) -> dict | None:
+        return next((r for r in reversed(self.other) if r.get("t") == "bracket"), None)
+
     def counts(self) -> dict[str, int]:
         return dict(Counter(r["verdict"] for r in self.rulings))
 
     def verdict(self) -> Verdict:
         """The run's verdict, under the same precedence as everything else: a
-        failure is never rescued, and an empty run never passes."""
+        failure is never rescued, and an empty run never passes. A sweep's
+        verdict is its bracket's."""
+        if self.is_sweep and (b := self.bracket):
+            return Verdict(b["verdict"])
         return Verdict.combine(Verdict(r["verdict"]) for r in self.rulings)
 
     def cache(self) -> dict[str, str]:
@@ -218,7 +235,11 @@ class Run:
 
     def summary(self) -> dict:
         counts = self.counts()
+        samples = [r for r in self.other if r.get("t") == "sample"]
         return {
+            "kind": "sweep" if self.is_sweep else "run",
+            "samples": len(samples),
+            "bracket": self.bracket,
             "run": self.header.get("run", ""),
             "served": self.served or "UNRECORDED",
             "endpoint": (self.header.get("provenance") or {}).get("endpoint", ""),

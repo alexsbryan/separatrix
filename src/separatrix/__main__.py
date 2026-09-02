@@ -40,9 +40,18 @@ def _cmd_replay(args) -> int:
         print(f"endpoint  {summary['endpoint']}")
     if summary["judge"]:
         print(f"judge     {summary['judge']}")
-    print(f"rulings   {summary['rulings']}   cached responses {summary['responses_cached']}")
-    for verdict, n in sorted(summary["counts"].items(), key=lambda kv: -kv[1]):
-        print(f"  {verdict:16} {n}")
+    if summary["kind"] == "sweep":
+        print(f"samples   {summary['samples']}   cached responses "
+              f"{summary['responses_cached']}")
+        if b := summary["bracket"]:
+            print(f"bracket   {b['coordinate']} in [{b['lo']:g}, {b['hi']:g}]  "
+                  f"(width {b['width']:g}, noise {b['noise']:.4g})")
+            print(f"          {b['note']}")
+    else:
+        print(f"rulings   {summary['rulings']}   cached responses "
+              f"{summary['responses_cached']}")
+        for verdict, n in sorted(summary["counts"].items(), key=lambda kv: -kv[1]):
+            print(f"  {verdict:16} {n}")
     print(f"verdict   {summary['verdict'].upper().replace('_', '-')}")
 
     if summary["unjudged"]:

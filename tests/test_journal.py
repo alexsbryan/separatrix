@@ -202,3 +202,24 @@ def test_a_restarted_sweep_does_not_re_derive_a_search_nobody_ran(tmp_path):
     again = bracket_from_records(Run.load(path).other, threshold=Y.threshold, name="y")
     assert (again.lo, again.hi) == (live.lo, live.hi)
     assert again.lo <= 0.2 <= again.hi        # the second search, not a blend
+
+
+def test_a_sweep_journal_is_folded_as_a_sweep(tmp_path):
+    """Folding a sweep as a plain run reports NEVER_RAN over hundreds of
+    recorded responses — true of the ruling records, false about the run."""
+    import sys
+    sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent))
+    from test_sweep import COORD, StepArena, Y, _judge
+
+    from separatrix import Budget, sweep
+
+    path = tmp_path / "s.jsonl"
+    with Journal(path, _prov()) as j:
+        live = sweep(StepArena(flip=0.37), _judge(), COORD, Y,
+                     budget=Budget(runs=20), replicates=2, journal=j)
+
+    run = Run.load(path)
+    assert run.is_sweep and not run.rulings
+    assert run.verdict() is live.verdict          # not NEVER_RAN
+    assert run.summary()["kind"] == "sweep"
+    assert run.summary()["samples"] == live.samples
