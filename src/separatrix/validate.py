@@ -33,10 +33,11 @@ from collections import defaultdict
 from fractions import Fraction
 from typing import Iterable, Sequence
 
-from .judge import BiasResult, Judge, LabeledCase, Validation
+from .judge import BiasResult, Judge, LabeledCase, Validated, Validation
 from .verdict import Verdict
 
 __all__ = [
+    "probe",
     "fisher_exact_2x2",
     "youden_j",
     "min_detectable_asymmetry",
@@ -209,3 +210,13 @@ def validate(
                         note=f"no asymmetry detected (gap {gap:.0%}, p={p:.3f}){worth}"),
         note=f"usable{worth}",
     ).stamped()
+
+
+def probe(judge: Judge, cases: Iterable[LabeledCase], **kw) -> Validated:
+    """Probe a judge and hand back the judge paired with what was found.
+
+    The pairing is the point: a sweep asks `judge.validation()`, so the
+    validation a result was computed under is the one that judge actually
+    earned, fixed at probe time and travelling with it.
+    """
+    return Validated(inner=judge, measured=validate(judge, cases, **kw))

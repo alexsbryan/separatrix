@@ -27,7 +27,8 @@ from typing import Any, Mapping, Protocol, runtime_checkable
 from .trial import Trial
 from .verdict import Ruling, Verdict
 
-__all__ = ["Tier", "LabeledCase", "BiasResult", "Validation", "Judge"]
+__all__ = ["Tier", "LabeledCase", "BiasResult", "Validation", "Judge",
+           "Validated", "BaseJudge"]
 
 
 class Tier(Enum):
@@ -143,3 +144,53 @@ class Judge(Protocol):
     def validation(self) -> Validation:
         """What is known about this judge. `Validation.unmeasured(tier)` is the
         honest answer before anyone has probed it."""
+
+
+@dataclass(frozen=True)
+class Validated:
+    """A judge paired with what a probe found out about it.
+
+    Composition rather than mutation: probing does not reach inside a judge and
+    change it. `validate()` produces a `Validation`, this pairs the two, and a
+    sweep asks the pair. So the validation a result was computed under is fixed
+    at the moment of probing and travels with the judge that earned it.
+    """
+
+    inner: Any
+    measured: Validation
+
+    @property
+    def id(self) -> str:
+        return self.inner.id
+
+    @property
+    def tier(self) -> Tier:
+        return self.inner.tier
+
+    def rule(self, trial: Trial) -> Ruling:
+        return self.inner.rule(trial)
+
+    def validation(self) -> Validation:
+        return self.measured
+
+
+class BaseJudge:
+    """Shared plumbing for the reference judges: an id, a declared tier, and the
+    honest default that nobody has probed this yet."""
+
+    def __init__(self, id: str, tier: Tier):
+        self._id, self._tier = id, tier
+
+    @property
+    def id(self) -> str:
+        return self._id
+
+    @property
+    def tier(self) -> Tier:
+        return self._tier
+
+    def validation(self) -> Validation:
+        return Validation.unmeasured(self._tier)
+
+    def rule(self, trial: Trial) -> Ruling:      # pragma: no cover - abstract
+        raise NotImplementedError

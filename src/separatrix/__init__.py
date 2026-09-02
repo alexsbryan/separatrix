@@ -14,9 +14,12 @@ contribution: bisect toward the flip, report a bracket, never a point.
 And a boundary is only locatable if the instrument does not move when the
 subject does. See `judge.py` for what that means and `validate.py` for the check.
 """
-from .judge import BiasResult, Judge, LabeledCase, Tier, Validation
+from .judge import (BaseJudge, BiasResult, Judge, LabeledCase, Tier, Validated,
+                    Validation)
+from .judges import FoldJudge, Outcome, ProcessJudge
 from .trial import Exchange, Response, Situation, Trial, digest, exchange
-from .validate import fisher_exact_2x2, min_detectable_asymmetry, validate, youden_j
+from .validate import (fisher_exact_2x2, min_detectable_asymmetry, probe, validate,
+                       youden_j)
 from .verdict import Ruling, Verdict
 
 __version__ = "0.0.1"
@@ -24,6 +27,7 @@ __version__ = "0.0.1"
 __all__ = [
     "Verdict", "Ruling",
     "Trial", "Situation", "Response", "Exchange", "exchange", "digest",
-    "Judge", "Tier", "Validation", "LabeledCase", "BiasResult",
-    "validate", "fisher_exact_2x2", "youden_j", "min_detectable_asymmetry",
+    "Judge", "Tier", "Validation", "Validated", "LabeledCase", "BiasResult", "BaseJudge",
+    "FoldJudge", "ProcessJudge", "Outcome",
+    "validate", "probe", "fisher_exact_2x2", "youden_j", "min_detectable_asymmetry",
 ]

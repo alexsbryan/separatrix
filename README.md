@@ -65,9 +65,15 @@ pytest -q
 | `trial.py` | `Trial` — abstract, because a wrapped simulator emits a trajectory and not utterances. `Exchange` is the LLM-agent shape. Ids are content hashes. |
 | `verdict.py` | Four verdicts. `combine` enforces the one rule they exist for: an unjudgeable result never rescues a failed one. |
 | `judge.py` | `Tier` (fold / instrumented / estimated), `Validation`, `LabeledCase`, the `Judge` protocol. |
-| `validate.py` | The bias probe. Fisher exact in exact rational arithmetic, Youden's J for discrimination, and the minimum detectable asymmetry so a pass is not hollow. Stdlib only. |
+| `validate.py` | The bias probe. Fisher exact in exact rational arithmetic, Youden's J for discrimination, and the minimum detectable asymmetry so a pass is not hollow. Stdlib only. `probe()` pairs a judge with what it earned. |
+| `judges/fold.py` | `FoldJudge` — a pure function, adapted. A rubric with nothing to say abstains, and abstention is not a pass. |
+| `judges/process.py` | `ProcessJudge` — one subprocess adapter for every judge that is not Python. Exit-code shape (`canon check`: 0 supported, 1 conflicts, 2 unaddressed, 3 cannot judge) and JSON shape (`score-answer`). Declares its tier because it cannot know it. |
 
-Not yet: the sweep, the arenas, the journal, the CLI, the reference judges.
+Nothing here ever fails into a pass. A crash, a timeout, unparseable output, a
+missing field, an exit code nobody mapped — each is COULD_NOT_JUDGE carrying the
+reason, because the alternative is a green result nobody earned.
+
+Not yet: the sweep, the arenas, the journal, the CLI.
 
 ## Licence
 
