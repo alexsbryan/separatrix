@@ -10,7 +10,7 @@ import urllib.error
 import urllib.request
 
 import pytest
-from separatrix import Agent, Chat, Provenance, Responder, Situation
+from separatrix import Agent, Chat, ChatError, Provenance, Responder, Situation
 from separatrix.client import UNREPORTED
 
 BASE = "http://localhost:9741"
@@ -28,6 +28,20 @@ MODELS = _models()
 live = pytest.mark.skipif(not MODELS, reason=f"no endpoint at {BASE}")
 
 
+def answering(responder, agent, situation):
+    """Call the endpoint, or skip.
+
+    An endpoint that is present but busy — mid-reload, loading a model — has not
+    disproven anything, and reporting that as a failed assertion sends whoever
+    reads the run looking for a defect that is not there. A refusal to answer is
+    not a wrong answer.
+    """
+    try:
+        return responder(agent, situation)
+    except ChatError as exc:
+        pytest.skip(f"endpoint present but not answering: {exc}")
+
+
 @live
 def test_the_endpoint_advertises_an_alias_and_a_real_model():
     """The setup for the defect: both names live in the same namespace, and only
@@ -40,10 +54,11 @@ def test_the_endpoint_advertises_an_alias_and_a_real_model():
 def test_a_live_call_records_what_served_it_not_what_was_asked():
     """The defect, closed, against a real server."""
     r = Responder(Chat(base_url=BASE, model="primary", max_tokens=32, temperature=0.0))
-    resp = r(Agent(id="a0", genome="Answer in one short sentence."),
-             Situation(prompt="How many rare orchids does the ledger record?",
-                       evidence=("The Keeper's ledger records thirty-seven rare orchids.",),
-                       kind="present"))
+    resp = answering(
+        r, Agent(id="a0", genome="Answer in one short sentence."),
+        Situation(prompt="How many rare orchids does the ledger record?",
+                  evidence=("The Keeper's ledger records thirty-seven rare orchids.",),
+                  kind="present"))
 
     served = resp.meta["served"]
     assert served and served != UNREPORTED
@@ -60,6 +75,6 @@ def test_the_cache_prevents_a_second_identical_call():
     r = Responder(Chat(base_url=BASE, model="primary", max_tokens=16, temperature=0.0))
     sit = Situation(prompt="Say the word yes.", kind="present")
     agent = Agent(id="a0", genome="Reply with one word.")
-    r(agent, sit)
-    r(Agent(id="a1", genome=agent.genome), sit)
+    answering(r, agent, sit)
+    answering(r, Agent(id="a1", genome=agent.genome), sit)
     assert (r.hits, r.misses) == (1, 1)
