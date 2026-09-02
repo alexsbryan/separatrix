@@ -1,0 +1,29 @@
+# Does an institution suppress fabrication without suppressing fact?
+#
+# UNRUN against a model. What the fake-world tests already establish, and what
+# this study should be read against: a GLOBAL reputation penalises an agent for
+# RELAYING something ungrounded, not only for inventing it, so honest agents pay
+# — and with no persona variation it is not selective at all. Report the cost
+# (honest reach lost per unit of fabrication suppressed), not just the suppression.
+
+[study]
+name    = "telephone"
+judge   = "telephone:judge"
+arena   = "telephone:arena"
+journal = "telephone.jsonl"
+
+[endpoint]
+model      = "primary"
+max_tokens = 120
+
+[sweep]
+# How much standing a teller must keep to be believed. 0 quarantines nobody,
+# which is the no-institution control arm — the same code path, not a branch.
+coordinate  = "reputation_threshold"
+lo          = 0.0
+hi          = 1.0
+outcome     = "telephone:false_reach"
+name        = "false-claim reach"
+threshold   = 3.0
+replicates  = 3
+budget_runs = 24

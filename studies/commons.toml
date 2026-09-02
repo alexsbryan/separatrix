@@ -1,0 +1,25 @@
+# How fast must a commons regenerate before restraint is worth having?
+#
+# UNRUN. Note what the fitness function does NOT do: it rewards units taken and
+# never consults sustainability. That is the truth-blind objective again, in the
+# oldest commons problem there is.
+
+[study]
+name    = "commons"
+judge   = "commons:judge"
+arena   = "commons:arena"
+journal = "commons.jsonl"
+
+[endpoint]
+model      = "primary"
+max_tokens = 60
+
+[sweep]
+coordinate  = "regeneration"
+lo          = 2.0
+hi          = 60.0
+outcome     = "commons:sustainable_rate"
+name        = "sustainable share"
+threshold   = 0.5
+replicates  = 3
+budget_runs = 24

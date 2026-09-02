@@ -1,0 +1,31 @@
+# Where does defection stop paying?
+#
+# UNRUN. The numbers this produces belong in FINDINGS.md once somebody has spent
+# the calls; nothing here claims a result yet.
+
+[study]
+name    = "trust-game"
+judge   = "trust_game:judge"
+arena   = "trust_game:arena"
+journal = "trust-game.jsonl"
+
+[endpoint]
+model      = "primary"
+max_tokens = 60
+
+[config]
+reward = 3.0
+sucker = 0.0
+punishment = 1.0
+
+[sweep]
+# The payoff for defecting on a cooperator. Below `reward` there is no dilemma
+# at all; far above it, defection dominates. The boundary is the interesting part.
+coordinate  = "temptation"
+lo          = 1.0
+hi          = 8.0
+outcome     = "trust_game:cooperation_rate"
+name        = "cooperation rate"
+threshold   = 0.5
+replicates  = 3
+budget_runs = 24

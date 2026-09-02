@@ -118,15 +118,21 @@ class Journal:
         self._fh.flush()
 
     def ruling(self, ruling: Ruling, **extra: Any) -> None:
-        self._emit({"t": "ruling", "run": self.run_id, **ruling.as_row(), **extra})
+        self._emit({**ruling.as_row(), **extra, "t": "ruling", "run": self.run_id})
 
     def response(self, key: str, text: str, *, served: str, **extra: Any) -> None:
         """A model's answer, keyed by content so the next sweep can reuse it."""
-        self._emit({"t": "response", "run": self.run_id, "key": key,
-                    "text": text, "served": served, **extra})
+        self._emit({**extra, "t": "response", "run": self.run_id, "key": key,
+                    "text": text, "served": served})
 
     def note(self, kind: str, **fields: Any) -> None:
-        self._emit({"t": kind, "run": self.run_id, **fields})
+        """Caller fields go first so the record's own keys cannot be clobbered.
+
+        Found the hard way: a tournament whose agents were named c, d and t
+        journalled its scores as `t={"points": ...}`, which overwrote the record
+        type and made the whole line unreadable. Reserved keys win.
+        """
+        self._emit({**fields, "t": kind, "run": self.run_id})
 
 
 def response_key(**parts: Any) -> str:

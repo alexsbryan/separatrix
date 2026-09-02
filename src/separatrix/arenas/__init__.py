@@ -5,7 +5,8 @@ from .evolution import Evolution, llm_rewrite
 from .mesa import MesaArena, TrajectoryTrial, rows_of
 from .process import ProcessArena, RowTrial
 from .replay import Replay, Scenario
+from .tournament import Tournament
 
 __all__ = ["Evolution", "llm_rewrite", "Diffusion", "Claim", "Reputation",
            "Replay", "Scenario", "ProcessArena", "RowTrial",
-           "MesaArena", "TrajectoryTrial", "rows_of"]
+           "MesaArena", "TrajectoryTrial", "rows_of", "Tournament"]
