@@ -103,3 +103,12 @@ class Chat:
         # The whole reason this function exists in one place.
         served = str(body.get("model") or "").strip() or UNREPORTED
         return Completion(text=strip_think(text or ""), served=served, raw=body)
+
+    def probe_served(self) -> str:
+        """One minimal call, to learn what this alias actually resolves to.
+
+        A journal's header has to be truthful from its first line, and the only
+        authority on what serves an alias is the server. Cheaper than being
+        wrong about it for the length of a study.
+        """
+        return self.complete("Reply with: ok", "ok", max_tokens=1, temperature=0.0).served

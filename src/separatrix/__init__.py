@@ -24,6 +24,7 @@ from .arenas import (Claim, Diffusion, Evolution, MesaArena, ProcessArena, Repla
 from .client import Chat, ChatError, Completion, strip_think
 from .judges import FoldJudge, ProcessJudge
 from .judges import ProcessResult
+from .study import Study, load_study, resolve
 from .sweep import (Arena, Bracket, Budget, Coordinate, Forecast, Outcome, Search,
                     bracket_from_records, sweep)
 from .trial import Exchange, Response, Situation, Trial, digest, exchange
@@ -44,6 +45,7 @@ __all__ = [
     "ProcessArena", "RowTrial", "MesaArena", "TrajectoryTrial", "rows_of",
     "Arena", "Coordinate", "Outcome", "Budget", "Forecast", "Bracket", "Search",
     "sweep", "bracket_from_records",
+    "Study", "load_study", "resolve",
     "Journal", "Provenance", "Run", "replay", "read_records",
     "validate", "probe", "fisher_exact_2x2", "youden_j", "min_detectable_asymmetry",
 ]

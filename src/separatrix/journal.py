@@ -64,9 +64,19 @@ class Provenance:
         """True when the journal would only have recorded an alias."""
         return bool(self.requested) and self.requested != self.served
 
-    def as_row(self) -> dict:
+    def identity(self) -> dict:
+        """What makes this run THIS run — deliberately without the clock.
+
+        A run id carrying a timestamp can never be recognised again, so a
+        crashed run reopened five minutes later becomes a different run, its
+        prior samples become someone else's, and resume — the thing an
+        append-only journal exists for — quietly stops working.
+        """
         return {"served": self.served, "requested": self.requested,
-                "endpoint": self.endpoint, "started_at": self.started_at.isoformat()}
+                "endpoint": self.endpoint}
+
+    def as_row(self) -> dict:
+        return {**self.identity(), "started_at": self.started_at.isoformat()}
 
 
 class Journal:
@@ -78,15 +88,21 @@ class Journal:
         self.path = Path(path)
         self.provenance = provenance
         self.config = dict(config or {})
-        self.run_id = digest("run", provenance.as_row(), self.config)
+        self.run_id = digest("run", provenance.identity(), self.config)
         self._fh = None
         self._judge = dict(judge or {})
 
     def __enter__(self) -> "Journal":
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        fresh = not self.path.exists() or self.path.stat().st_size == 0
+        # One header per RUN, not per file. An append-only journal legitimately
+        # holds several runs, and each needs its own provenance — otherwise the
+        # header describes the first run while the records are from all of them.
+        known = set()
+        if self.path.exists() and self.path.stat().st_size:
+            known = {r.get("run") for r in read_records(self.path)
+                     if r.get("t") == "header"}
         self._fh = self.path.open("a", encoding="utf-8")
-        if fresh:
+        if self.run_id not in known:
             self._emit({"t": "header", "run": self.run_id, "config": self.config,
                         "provenance": self.provenance.as_row(), "judge": self._judge})
         return self
@@ -142,12 +158,25 @@ class Run:
     other: tuple[dict, ...]
 
     @classmethod
-    def load(cls, path: str | os.PathLike) -> "Run":
+    def load(cls, path: str | os.PathLike, run: str | None = None) -> "Run":
+        """Fold ONE run out of a journal.
+
+        A file may hold several. Mixing them produces counts that belong to no
+        run and a bracket derived from two different searches, so the default is
+        the most recent — named explicitly with `run`.
+        """
+        records = list(read_records(path))
+        headers = [r for r in records if r.get("t") == "header"]
+        if run is None and headers:
+            run = headers[-1].get("run")
+
         header, rulings, responses, other = {}, [], [], []
-        for rec in read_records(path):
+        for rec in records:
+            if run is not None and rec.get("run") not in (run, None):
+                continue
             kind = rec.get("t")
             if kind == "header":
-                header = header or rec
+                header = rec if rec.get("run") == run else header
             elif kind == "ruling":
                 rulings.append(rec)
             elif kind == "response":
@@ -157,6 +186,12 @@ class Run:
         return cls(header, tuple(rulings), tuple(responses), tuple(other))
 
     # ── what the fold can answer ────────────────────────────────────────────
+
+    @staticmethod
+    def runs(path: str | os.PathLike) -> list[str]:
+        """Every run this journal holds, oldest first."""
+        return [r["run"] for r in read_records(path)
+                if r.get("t") == "header" and r.get("run")]
 
     @property
     def served(self) -> str:

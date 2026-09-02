@@ -1,0 +1,18 @@
+[study]
+name    = "tiny"
+judge   = "tiny_study:judge"
+arena   = "tiny_study:arena"
+journal = "tiny.jsonl"
+
+[endpoint]
+model = ""          # no model at all: the arena and the judge are both folds
+
+[sweep]
+coordinate  = "quiet_from"
+lo          = 18.0
+hi          = 26.0
+outcome     = "tiny_study:quiet_rate"
+name        = "quiet rate"
+threshold   = 0.5
+replicates  = 2
+budget_runs = 20

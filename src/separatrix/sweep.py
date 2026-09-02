@@ -245,7 +245,12 @@ class Search:
             self._settle_ends()
             return
 
-        if abs(mean - self.outcome.threshold) <= self.resolution:
+        # A zero noise floor cannot stop a search. With no sampling uncertainty
+        # there is nothing to be unresolvable about, and treating an outcome that
+        # lands exactly ON the threshold as ambiguous returns the whole range —
+        # which is what a deterministic study with a discrete outcome does every
+        # time. Resolution has to be positive to be a floor.
+        if self.resolution > 0 and abs(mean - self.outcome.threshold) <= self.resolution:
             self._finish(
                 f"stopped at the noise floor: {self.outcome.name} {mean:.3g} at "
                 f"{value:g} is within {self.resolution:.3g} of the threshold "
@@ -368,7 +373,15 @@ def bracket_from_records(records: Iterable[Mapping[str, Any]], *, threshold: flo
     `Search`, so a published bracket can be checked against the evidence that
     produced it by anyone holding the journal.
     """
-    samples: list[dict] = [r for r in records if r.get("t") == "sample"]
+    # A sweep restarted inside one run leaves two sets of samples in the same
+    # journal, and folding both would re-derive a search nobody performed. The
+    # forecast record is written once per sweep, so it marks where the live one
+    # began.
+    records = list(records)
+    last_start = max((i for i, r in enumerate(records)
+                      if r.get("t") == "forecast"), default=-1)
+    samples: list[dict] = [r for r in records[last_start + 1:]
+                           if r.get("t") == "sample"]
     if not samples:
         raise ValueError("no sample records in this journal — nothing to re-derive")
 

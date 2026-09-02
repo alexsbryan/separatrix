@@ -148,3 +148,57 @@ def test_a_journal_with_no_provenance_is_flagged_loudly(tmp_path, capsys):
     p.write_text('{"t":"ruling","verdict":"passed","trial_id":"t0","judge":"x"}\n')
     main(["replay", str(p)])
     assert "records no served model" in capsys.readouterr().err
+
+
+# ── one journal, several runs ───────────────────────────────────────────────
+
+def test_a_run_id_survives_being_reopened(tmp_path):
+    """Resume is the whole point of an append-only log. A run id carrying a
+    clock can never be recognised again, so a crashed run reopened five minutes
+    later becomes a different run and its samples become someone else's."""
+    import time
+
+    a = Journal(tmp_path / "r.jsonl", _prov(), config={"x": 1})
+    time.sleep(0.01)
+    b = Journal(tmp_path / "r.jsonl", _prov(), config={"x": 1})
+    assert a.run_id == b.run_id
+
+    c = Journal(tmp_path / "r.jsonl", _prov(), config={"x": 2})
+    assert c.run_id != a.run_id          # a different study IS a different run
+
+
+def test_each_run_gets_its_own_header_and_folds_separately(tmp_path):
+    path = tmp_path / "many.jsonl"
+    with Journal(path, _prov(), config={"x": 1}) as j:
+        j.ruling(Ruling(verdict=Verdict.PASSED, trial_id="t0", judge="j@1"))
+    with Journal(path, _prov(), config={"x": 2}) as j:
+        j.ruling(Ruling(verdict=Verdict.FAILED, trial_id="t1", judge="j@1"))
+        j.ruling(Ruling(verdict=Verdict.FAILED, trial_id="t2", judge="j@1"))
+
+    assert len(Run.runs(path)) == 2
+    latest = Run.load(path)                       # defaults to the most recent
+    assert latest.counts() == {"failed": 2}
+    first = Run.load(path, Run.runs(path)[0])
+    assert first.counts() == {"passed": 1}
+    assert first.header["config"] == {"x": 1}
+
+
+def test_a_restarted_sweep_does_not_re_derive_a_search_nobody_ran(tmp_path):
+    """Two sweeps in one run leave two sets of samples. Folding both would
+    interleave two searches into one bracket."""
+    import sys
+    sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent))
+    from test_sweep import COORD, StepArena, Y, _judge
+
+    from separatrix import Budget, bracket_from_records, sweep
+
+    path = tmp_path / "twice.jsonl"
+    with Journal(path, _prov(), config={"k": 1}) as j:
+        sweep(StepArena(flip=0.8), _judge(), COORD, Y,
+              budget=Budget(runs=12), replicates=2, journal=j)
+        live = sweep(StepArena(flip=0.2), _judge(), COORD, Y,
+                     budget=Budget(runs=12), replicates=2, journal=j)
+
+    again = bracket_from_records(Run.load(path).other, threshold=Y.threshold, name="y")
+    assert (again.lo, again.hi) == (live.lo, live.hi)
+    assert again.lo <= 0.2 <= again.hi        # the second search, not a blend

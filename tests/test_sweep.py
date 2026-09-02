@@ -292,3 +292,23 @@ def test_sep_bracket_reports_a_journal_that_contradicts_itself(tmp_path, capsys)
     code = cli(["bracket", str(path)])
     assert code == 2
     assert "MISMATCH" in capsys.readouterr().err
+
+
+def test_a_zero_noise_floor_cannot_stop_the_search():
+    """A deterministic arena has no sampling uncertainty, so nothing about it is
+    unresolvable — including an outcome that lands exactly on the threshold.
+    Treating that as ambiguous returns the whole range, which is what a discrete
+    outcome does every time."""
+    class Exact(StepArena):
+        def run(self, config, judge):
+            self.calls += 1
+            # crosses the threshold exactly at x = 0.5
+            return [Ruling(verdict=Verdict.PASSED, trial_id=f"t{self.calls}",
+                           judge=judge.id, facts={"y": config[self.param]})]
+
+    b = sweep(Exact(), _judge(), COORD, Outcome(lambda rs: rs[0].facts["y"], 0.5),
+              budget=Budget(runs=30), replicates=2)
+    assert b.verdict is Verdict.PASSED, b.note
+    assert b.noise == 0.0
+    assert b.width < COORD.span / 8       # it narrowed, rather than giving up
+    assert b.lo <= 0.5 <= b.hi

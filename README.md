@@ -67,6 +67,7 @@ a pass says what it is worth:
 | `arenas/replay.py` | A fixed scenario set decided under a policy. No population, no model — the `canon replay` shape. |
 | `arenas/process.py` | Any simulator that is not Python: config in as JSON, behaviour out as JSONL. NetLogo headless, Julia, Java — one adapter, not four bindings. |
 | `arenas/mesa.py` | A Mesa model as an arena. Duck-typed on three names, so it imports nothing. |
+| `study.py` | A study is a TOML file plus a judge function. World, arena, coordinate and budget are data; Python is for judging and behaving. |
 | `sweep.py` | `Search` — the decider — plus `sweep` (pays for samples) and `bracket_from_records` (replays them free). Noise-floor bisection, cost forecast, `Bracket`. |
 | `__main__.py` | `sep replay` and `sep bracket` — both re-derive with no model and no endpoint. |
 
@@ -222,7 +223,42 @@ same adapter as the process *judge*, pointed the other way. And it deliberately
 does not let a simulator emit verdicts: a tool that both acts and grades itself is
 the arrangement judge independence exists to forbid.
 
-Not yet: the sandbox examples ported across.
+## A study
+
+```toml
+[study]
+name  = "epistemic-garden"
+judge = "epistemic_garden:judge"
+arena = "epistemic_garden:arena"
+
+[endpoint]
+model = "primary"          # an alias; the journal records what SERVED it
+
+[sweep]
+coordinate  = "honesty_weight"   # what the game pays for admitting ignorance
+lo          = 0.0                # at 0 the objective is truth-blind
+hi          = 4.0
+outcome     = "epistemic_garden:fabrication_rate"
+threshold   = 0.5
+replicates  = 2
+budget_runs = 12
+```
+
+```
+$ sep run studies/epistemic_garden.toml --cases epistemic_garden:cases
+study     epistemic-garden   (epistemic_garden.toml)
+judge     epistemic-garden@1  tier=fold  PASSED  — usable; at n=20/20 …
+endpoint  http://localhost:9741  asked=primary  served=Qwen3.6-35B-A3B-MTP-UD-Q6_K
+forecast  12 runs: noise from 2 replicates at each end, then 4 bisection steps …
+```
+
+The probe runs **before** anything is spent, and a study whose judge cannot be
+probed exits 3 without making a single call. Everything else in that study is
+three functions: how a trial is judged, how a genome is rewarded, and what the
+sweep measures. If a study needs Python beyond that shape, a primitive is missing
+and the fix belongs in the library.
+
+Not yet: the remaining sandbox examples ported across.
 
 ## Licence
 

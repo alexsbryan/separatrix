@@ -7,7 +7,7 @@ name = "separatrix"
 version = "0.0.1"
 description = "Find where a multi-agent outcome flips, with an instrument you have checked."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"   # tomllib
 license = { file = "LICENSE" }
 # Core has NO runtime dependencies, and that is a design rule rather than an
 # accident: adapters for other frameworks are extras and convert at the boundary.
