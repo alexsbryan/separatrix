@@ -17,6 +17,9 @@ subject does. See `judge.py` for what that means and `validate.py` for the check
 from .judge import (BaseJudge, BiasResult, Judge, LabeledCase, Tier, Validated,
                     Validation)
 from .journal import Journal, Provenance, Run, read_records, replay
+from .agent import Agent, Responder
+from .arenas import Evolution, llm_rewrite
+from .client import Chat, ChatError, Completion, strip_think
 from .judges import FoldJudge, ProcessJudge
 from .judges import ProcessResult
 from .sweep import (Arena, Bracket, Budget, Coordinate, Forecast, Outcome, Search,
@@ -33,6 +36,8 @@ __all__ = [
     "Trial", "Situation", "Response", "Exchange", "exchange", "digest",
     "Judge", "Tier", "Validation", "Validated", "LabeledCase", "BiasResult", "BaseJudge",
     "FoldJudge", "ProcessJudge", "ProcessResult",
+    "Chat", "Completion", "ChatError", "strip_think",
+    "Agent", "Responder", "Evolution", "llm_rewrite",
     "Arena", "Coordinate", "Outcome", "Budget", "Forecast", "Bracket", "Search",
     "sweep", "bracket_from_records",
     "Journal", "Provenance", "Run", "replay", "read_records",

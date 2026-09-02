@@ -49,15 +49,6 @@ a pass says what it is worth:
          this probe could have caught is 25%
 ```
 
-## Running it
-
-Zero runtime dependencies, by design rule rather than by accident.
-
-```bash
-pip install -e ".[dev]"
-pytest -q
-```
-
 ## What exists
 
 | | |
@@ -69,6 +60,9 @@ pytest -q
 | `judges/fold.py` | `FoldJudge` — a pure function, adapted. A rubric with nothing to say abstains, and abstention is not a pass. |
 | `judges/process.py` | `ProcessJudge` — one subprocess adapter for every judge that is not Python. Exit-code shape (`canon check`: 0 supported, 1 conflicts, 2 unaddressed, 3 cannot judge) and JSON shape (`score-answer`). Declares its tier because it cannot know it. |
 | `journal.py` | Append-only log; every derived number is a fold over it. `Provenance` will not construct without the model the **server** reported. |
+| `client.py` | OpenAI-compatible `/v1/chat/completions` over stdlib urllib. Reads `served` from the **response**. |
+| `agent.py` | `Agent` — an identity and a genome that is a sentence. `Responder` — the only path to a model; owns the cache, watches what served. |
+| `arenas/evolution.py` | Selection on strategy text. Fitness is a function of the **config**, so sweeping a coordinate sweeps the incentive. |
 | `sweep.py` | `Search` — the decider — plus `sweep` (pays for samples) and `bracket_from_records` (replays them free). Noise-floor bisection, cost forecast, `Bracket`. |
 | `__main__.py` | `sep replay` and `sep bracket` — both re-derive with no model and no endpoint. |
 
@@ -139,7 +133,41 @@ answer. Noise larger than the effect, an unprobed judge, or `replicates < 2` is
 COULD_NOT_JUDGE. A budget too small to measure noise is NEVER_RAN, and spends
 nothing.
 
-Not yet: the arenas.
+## The thesis, end to end
+
+Same world, same agents, same probed judge. Only what the game rewards differs:
+
+```python
+def fitness(rulings, config):
+    correct = sum(r.verdict.is_pass() and r.facts["kind"] == "present" for r in rulings)
+    honest  = sum(r.facts["kind"] == "absent" and r.facts["declined"] for r in rulings)
+    return correct + config["honesty_weight"] * honest      # the swept coordinate
+```
+
+Selection converges on opposite epistemic dispositions, and the sweep brackets
+where it turns over. The champion genome is journalled every generation, because
+a rate says selection moved and the sentence says what it moved toward — which is
+the part a reader can argue with.
+
+Agents reach any OpenAI-compatible endpoint (Ollama, vLLM, llama.cpp, LM Studio,
+the hosted APIs) through `Agent.respond`, the only place a model is called. Two
+agents holding the same genome asked the same question are one call, not two.
+
+## Running it
+
+Zero runtime dependencies, by design rule rather than by accident.
+
+```bash
+pip install -e ".[dev]"
+pytest -q
+```
+
+Tests in `test_live.py` need an endpoint on `localhost:9741` and skip without
+one. They exist because the alias defect was invisible to every offline test
+that could have been written — it only appears when a real server answers and
+reports what it actually used.
+
+Not yet: the diffusion and replay arenas, `MesaArena`.
 
 ## Licence
 
