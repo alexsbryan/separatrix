@@ -2,7 +2,10 @@
 """Arenas: the expensive half. Each produces judged trials for one config."""
 from .diffusion import Claim, Diffusion, Reputation
 from .evolution import Evolution, llm_rewrite
+from .mesa import MesaArena, TrajectoryTrial, rows_of
+from .process import ProcessArena, RowTrial
 from .replay import Replay, Scenario
 
 __all__ = ["Evolution", "llm_rewrite", "Diffusion", "Claim", "Reputation",
-           "Replay", "Scenario"]
+           "Replay", "Scenario", "ProcessArena", "RowTrial",
+           "MesaArena", "TrajectoryTrial", "rows_of"]

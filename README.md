@@ -65,6 +65,8 @@ a pass says what it is worth:
 | `arenas/evolution.py` | Selection on strategy text. Fitness is a function of the **config**, so sweeping a coordinate sweeps the incentive. |
 | `arenas/diffusion.py` | A claim propagates; each agent retells what it *heard*; the judge scores every hop against the original source. A reputation norm can break the chain, and its threshold is the coordinate. |
 | `arenas/replay.py` | A fixed scenario set decided under a policy. No population, no model — the `canon replay` shape. |
+| `arenas/process.py` | Any simulator that is not Python: config in as JSON, behaviour out as JSONL. NetLogo headless, Julia, Java — one adapter, not four bindings. |
+| `arenas/mesa.py` | A Mesa model as an arena. Duck-typed on three names, so it imports nothing. |
 | `sweep.py` | `Search` — the decider — plus `sweep` (pays for samples) and `bracket_from_records` (replays them free). Noise-floor bisection, cost forecast, `Bracket`. |
 | `__main__.py` | `sep replay` and `sep bracket` — both re-derive with no model and no endpoint. |
 
@@ -191,7 +193,36 @@ norm has nothing to tell them apart with, and it strangles fact and fabrication
 equally. Both are tested, because they are properties of the design rather than
 bugs in it.
 
-Not yet: `MesaArena`, and the sandbox examples ported across.
+## Mesa, and the rest of the ABM world
+
+`batch_run` **does not survive Mesa 4.** 3.5.1 ships `mesa/batchrunner.py` and
+exports `batch_run`; `main`, self-reporting `4.0.0a0`, has no `batchrunner.py`,
+no `batch_run` in `__all__`, and zero code-search hits for it. `Model.step`,
+`Model.running` and `DataCollector.get_model_vars_dataframe()` exist in both, so
+`MesaArena` rests on those three and nothing else — it imports no mesa at all, and
+its tests run without mesa installed, which is the proof it spans the version.
+
+> `batch_run` when a step is free. `separatrix sweep` when a step costs a second.
+
+On one axis with cheap samples a full factorial is simpler and fine, and SALib
+does sensitivity better than this ever will. **EMA Workbench is the prior art for
+the search** — scenario discovery with PRIM and feature scoring, and Separatrix
+should feed it rather than reimplement it. What is new here is cost-aware
+bisection with a measured noise floor, and the judge bias probe.
+
+The reason to reach for this from Mesa is narrower and sharper: `DataCollector`
+reports computed variables, which is complete while agent state is numbers. The
+moment an agent emits **text**, Mesa has no way to score what it said — and no
+notion of whether the thing scoring it is biased toward the parameter you are
+varying.
+
+Everything not in Python gets one primitive rather than bindings. `ProcessArena`
+takes config on stdin and reads behaviour rows from stdout; it is structurally the
+same adapter as the process *judge*, pointed the other way. And it deliberately
+does not let a simulator emit verdicts: a tool that both acts and grades itself is
+the arrangement judge independence exists to forbid.
+
+Not yet: the sandbox examples ported across.
 
 ## Licence
 

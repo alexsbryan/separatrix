@@ -18,6 +18,8 @@ sep = "separatrix.__main__:main"
 
 [project.optional-dependencies]
 dev = ["pytest>=7"]
+# Adapters are extras. Core stays dependency-free; this converts at the boundary.
+mesa = ["mesa>=3.0"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/separatrix"]
