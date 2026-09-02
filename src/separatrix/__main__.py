@@ -12,6 +12,7 @@ import json
 import sys
 
 from .journal import Run
+from .sweep import bracket_from_records
 
 __all__ = ["main"]
 
@@ -47,6 +48,41 @@ def _cmd_replay(args) -> int:
     return 0 if run.verdict().is_pass() else 1
 
 
+def _cmd_bracket(args) -> int:
+    run = Run.load(args.journal)
+    recorded = next((r for r in run.other if r.get("t") == "bracket"), None)
+    threshold = args.threshold
+    if threshold is None:
+        if recorded is None or recorded.get("threshold") is None:
+            print("this journal records no bracket, so pass --threshold to say what "
+                  "line the outcome had to cross", file=sys.stderr)
+            return 2
+        threshold = float(recorded["threshold"])
+
+    derived = bracket_from_records(run.other, threshold=threshold,
+                                   name=args.name or "outcome")
+    if args.json:
+        print(json.dumps(derived.as_row(), indent=2))
+    else:
+        print(derived.render())
+
+    if recorded is None:
+        return 0 if derived.verdict.is_pass() else 1
+
+    # The point of re-derivation: a recorded result that its own evidence does
+    # not reproduce is the finding, not a rounding difference to smooth over.
+    same = (recorded["verdict"] == derived.verdict.value
+            and recorded["lo"] == derived.lo and recorded["hi"] == derived.hi)
+    if not same:
+        print(f"\nMISMATCH — the journal records "
+              f"{recorded['verdict']} [{recorded['lo']:g}, {recorded['hi']:g}] but its "
+              f"own samples re-derive {derived.verdict.value} "
+              f"[{derived.lo:g}, {derived.hi:g}]", file=sys.stderr)
+        return 2
+    print("\nre-derived from the journal's own samples; matches what was recorded")
+    return 0 if derived.verdict.is_pass() else 1
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="sep", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -56,6 +92,13 @@ def main(argv=None) -> int:
     replay.add_argument("journal")
     replay.add_argument("--json", action="store_true", help="machine-readable output")
     replay.set_defaults(fn=_cmd_replay)
+
+    bracket = subs.add_parser("bracket", help="re-derive a bracket from journalled samples (no model)")
+    bracket.add_argument("journal")
+    bracket.add_argument("--threshold", type=float, help="the line the outcome had to cross")
+    bracket.add_argument("--name", help="outcome name, for the rendering")
+    bracket.add_argument("--json", action="store_true")
+    bracket.set_defaults(fn=_cmd_bracket)
 
     args = ap.parse_args(argv)
     return args.fn(args)

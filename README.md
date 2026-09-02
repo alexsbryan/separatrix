@@ -69,7 +69,8 @@ pytest -q
 | `judges/fold.py` | `FoldJudge` — a pure function, adapted. A rubric with nothing to say abstains, and abstention is not a pass. |
 | `judges/process.py` | `ProcessJudge` — one subprocess adapter for every judge that is not Python. Exit-code shape (`canon check`: 0 supported, 1 conflicts, 2 unaddressed, 3 cannot judge) and JSON shape (`score-answer`). Declares its tier because it cannot know it. |
 | `journal.py` | Append-only log; every derived number is a fold over it. `Provenance` will not construct without the model the **server** reported. |
-| `__main__.py` | `sep replay <journal>` — re-derives a run with no model and no endpoint. |
+| `sweep.py` | `Search` — the decider — plus `sweep` (pays for samples) and `bracket_from_records` (replays them free). Noise-floor bisection, cost forecast, `Bracket`. |
+| `__main__.py` | `sep replay` and `sep bracket` — both re-derive with no model and no endpoint. |
 
 Nothing here ever fails into a pass. A crash, a timeout, unparseable output, a
 missing field, an exit code nobody mapped — each is COULD_NOT_JUDGE carrying the
@@ -97,7 +98,48 @@ author. An OpenAI-compatible response carries the served id in its own body, so
 the fix costs nothing but the discipline of reading it, and `Provenance` will not
 construct without one.
 
-Not yet: the sweep, the arenas.
+## The sweep
+
+```
+$ sep bracket run.jsonl
+PASSED  x flips in [0.25, 0.5]  (width 0.25)
+  noise 0.02066 at threshold 0.5; 20 runs
+  stopped at the noise floor: outcome 0.518 at 0.375 is within 0.0207 of the
+  threshold (per-sample noise 0.0207 over 4 replicates), so which side it falls
+  on is not resolvable with these samples
+
+re-derived from the journal's own samples; matches what was recorded
+```
+
+Three things that make this the product rather than a bisection routine.
+
+**The noise floor sets the resolution, and the answer is never a point.** Noise
+is measured first from replicates at both ends, and the search stops when the
+midpoint can no longer be told from the threshold. The step that could not be
+called does **not** narrow the bracket — bisection's invariant is that the
+crossing lies in the current interval, and a midpoint you cannot place says
+nothing about which half holds it. That run above spent 20 of a 400-run budget,
+because the remaining 380 would have bought nothing.
+
+**It forecasts before it spends.** `60 runs / ~7200 model calls: noise from 3
+replicates at each end, then 18 bisection steps -> final bracket ~3.8e-06 wide,
+if noise does not stop it sooner.`
+
+**One decider, two drivers.** Bisection chooses during acquisition, so the
+decision cannot be a fold applied afterwards. It is a state machine, driven once
+by `sweep` (which pays per sample) and once by `bracket_from_records` (which
+replays a journal for free). A second implementation would be a second answer to
+"where is the boundary", and the journal would stop being able to speak for the
+run. `sep bracket` reports a recorded result its own samples do not reproduce as
+a mismatch, and exits 2.
+
+Four verdicts here too. A boundary found is PASSED. Both ends on the same side
+of the threshold is FAILED — a definite "not in this range", not an absent
+answer. Noise larger than the effect, an unprobed judge, or `replicates < 2` is
+COULD_NOT_JUDGE. A budget too small to measure noise is NEVER_RAN, and spends
+nothing.
+
+Not yet: the arenas.
 
 ## Licence
 

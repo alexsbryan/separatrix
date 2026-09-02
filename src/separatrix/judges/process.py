@@ -26,10 +26,10 @@ from ..judge import BaseJudge, Tier
 from ..trial import Trial
 from ..verdict import Ruling, Verdict
 
-__all__ = ["ProcessJudge", "Outcome"]
+__all__ = ["ProcessJudge", "ProcessResult"]
 
 
-class Outcome:
+class ProcessResult:
     """What came back from the process, before anyone decided what it means."""
 
     __slots__ = ("returncode", "stdout", "stderr")
@@ -38,7 +38,7 @@ class Outcome:
         self.returncode, self.stdout, self.stderr = returncode, stdout, stderr
 
 
-Decoder = Callable[[Outcome], tuple[Verdict, Mapping[str, Any], str]]
+Decoder = Callable[[ProcessResult], tuple[Verdict, Mapping[str, Any], str]]
 
 
 class ProcessJudge(BaseJudge):
@@ -79,7 +79,7 @@ class ProcessJudge(BaseJudge):
         permission to assume the best.
         """
 
-        def decode(out: Outcome):
+        def decode(out: ProcessResult):
             verdict = codes.get(out.returncode)
             observed = {"exit_code": out.returncode, "stdout": out.stdout.strip()[:2000]}
             if verdict is None:
@@ -106,7 +106,7 @@ class ProcessJudge(BaseJudge):
         be re-scored under a changed bar.
         """
 
-        def decode(out: Outcome):
+        def decode(out: ProcessResult):
             if out.returncode != 0:
                 return (Verdict.COULD_NOT_JUDGE, {"exit_code": out.returncode},
                         f"exit {out.returncode}: {out.stderr.strip()[:400]}")
@@ -142,7 +142,7 @@ class ProcessJudge(BaseJudge):
         except (OSError, ValueError) as exc:
             return self._absent(trial, f"could not run {self._argv[0]!r}: {exc}")
 
-        verdict, observed, note = self._decode(Outcome(proc.returncode, proc.stdout, proc.stderr))
+        verdict, observed, note = self._decode(ProcessResult(proc.returncode, proc.stdout, proc.stderr))
         return Ruling(verdict=verdict, trial_id=trial.id, judge=self.id,
                       facts=dict(observed), note=note)
 

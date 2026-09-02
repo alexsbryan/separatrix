@@ -17,7 +17,10 @@ subject does. See `judge.py` for what that means and `validate.py` for the check
 from .judge import (BaseJudge, BiasResult, Judge, LabeledCase, Tier, Validated,
                     Validation)
 from .journal import Journal, Provenance, Run, read_records, replay
-from .judges import FoldJudge, Outcome, ProcessJudge
+from .judges import FoldJudge, ProcessJudge
+from .judges import ProcessResult
+from .sweep import (Arena, Bracket, Budget, Coordinate, Forecast, Outcome, Search,
+                    bracket_from_records, sweep)
 from .trial import Exchange, Response, Situation, Trial, digest, exchange
 from .validate import (fisher_exact_2x2, min_detectable_asymmetry, probe, validate,
                        youden_j)
@@ -29,7 +32,9 @@ __all__ = [
     "Verdict", "Ruling",
     "Trial", "Situation", "Response", "Exchange", "exchange", "digest",
     "Judge", "Tier", "Validation", "Validated", "LabeledCase", "BiasResult", "BaseJudge",
-    "FoldJudge", "ProcessJudge", "Outcome",
+    "FoldJudge", "ProcessJudge", "ProcessResult",
+    "Arena", "Coordinate", "Outcome", "Budget", "Forecast", "Bracket", "Search",
+    "sweep", "bracket_from_records",
     "Journal", "Provenance", "Run", "replay", "read_records",
     "validate", "probe", "fisher_exact_2x2", "youden_j", "min_detectable_asymmetry",
 ]
