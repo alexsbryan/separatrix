@@ -16,6 +16,7 @@ subject does. See `judge.py` for what that means and `validate.py` for the check
 """
 from .judge import (BaseJudge, BiasResult, Judge, LabeledCase, Tier, Validated,
                     Validation)
+from .journal import Journal, Provenance, Run, read_records, replay
 from .judges import FoldJudge, Outcome, ProcessJudge
 from .trial import Exchange, Response, Situation, Trial, digest, exchange
 from .validate import (fisher_exact_2x2, min_detectable_asymmetry, probe, validate,
@@ -29,5 +30,6 @@ __all__ = [
     "Trial", "Situation", "Response", "Exchange", "exchange", "digest",
     "Judge", "Tier", "Validation", "Validated", "LabeledCase", "BiasResult", "BaseJudge",
     "FoldJudge", "ProcessJudge", "Outcome",
+    "Journal", "Provenance", "Run", "replay", "read_records",
     "validate", "probe", "fisher_exact_2x2", "youden_j", "min_detectable_asymmetry",
 ]

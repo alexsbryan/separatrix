@@ -68,12 +68,36 @@ pytest -q
 | `validate.py` | The bias probe. Fisher exact in exact rational arithmetic, Youden's J for discrimination, and the minimum detectable asymmetry so a pass is not hollow. Stdlib only. `probe()` pairs a judge with what it earned. |
 | `judges/fold.py` | `FoldJudge` — a pure function, adapted. A rubric with nothing to say abstains, and abstention is not a pass. |
 | `judges/process.py` | `ProcessJudge` — one subprocess adapter for every judge that is not Python. Exit-code shape (`canon check`: 0 supported, 1 conflicts, 2 unaddressed, 3 cannot judge) and JSON shape (`score-answer`). Declares its tier because it cannot know it. |
+| `journal.py` | Append-only log; every derived number is a fold over it. `Provenance` will not construct without the model the **server** reported. |
+| `__main__.py` | `sep replay <journal>` — re-derives a run with no model and no endpoint. |
 
 Nothing here ever fails into a pass. A crash, a timeout, unparseable output, a
 missing field, an exit code nobody mapped — each is COULD_NOT_JUDGE carrying the
 reason, because the alternative is a green result nobody earned.
 
-Not yet: the sweep, the arenas, the journal, the CLI.
+```
+$ sep replay run.jsonl
+run       492e3ead9d247556
+served    Qwen3.6-35B-A3B-MTP-UD-Q6_K
+judge     grounding-fold@1
+rulings   9   cached responses 9
+  passed           6
+  failed           2
+  could_not_judge  1
+verdict   FAILED
+
+1 ruling(s) reached no verdict:
+     1x no evidence for this probe kind
+```
+
+Journals name what **served**, never what was asked for. The sandbox this grew
+from recorded `"model": "primary"` in every run — an alias, later repointed — so
+which model produced its published tables is now unrecoverable, including by its
+author. An OpenAI-compatible response carries the served id in its own body, so
+the fix costs nothing but the discipline of reading it, and `Provenance` will not
+construct without one.
+
+Not yet: the sweep, the arenas.
 
 ## Licence
 

@@ -13,6 +13,9 @@ license = { file = "LICENSE" }
 # accident: adapters for other frameworks are extras and convert at the boundary.
 dependencies = []
 
+[project.scripts]
+sep = "separatrix.__main__:main"
+
 [project.optional-dependencies]
 dev = ["pytest>=7"]
 
