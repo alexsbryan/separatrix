@@ -30,7 +30,7 @@ base_url    = "http://localhost:9741"
 model       = "primary"          # an alias; the journal records what SERVED it
 temperature = 0.8
 max_tokens  = 400   # raised from 220: the reasoning replies were truncated
-workers     = 2    # a wall-clock setting; the calls made are identical at any value
+workers     = 3    # a wall-clock setting; the calls made are identical at any value
 
 [config]
 honesty_weight = 0.0
