@@ -103,6 +103,10 @@ def test_sweeping_the_temptation_brackets_where_defection_stops_paying():
         return holder["arena"].cooperation_rate()
 
     class Fresh:
+        def draw(self, label):
+            """A whole new tournament per replicate, so nothing survives to be
+            reused. Declared rather than left to the sweep to guess."""
+
         def run(self, config, j):
             holder["arena"] = arena()
             return holder["arena"].run(config, j)

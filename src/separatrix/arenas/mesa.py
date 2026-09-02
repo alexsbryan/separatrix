@@ -85,6 +85,14 @@ class MesaArena:
         self.journal = journal
         self.fixed = fixed
 
+    def draw(self, label: str) -> None:
+        """Nothing here is cached between draws — every run builds a new model — so a
+        replicate is already independent and there is nothing to separate.
+
+        Declared rather than omitted: a sweep warns about an arena that cannot
+        say, because the silent case is one whose replicates share state and
+        nobody noticed."""
+
     def run(self, config: Mapping[str, Any], judge: Judge) -> Sequence[Ruling]:
         model = self.model_cls(**{**self.fixed, **dict(config)})
         missing = [name for name in REQUIRED if not hasattr(model, name)]

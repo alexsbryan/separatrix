@@ -123,6 +123,17 @@ Replicates are **repeats, not seeds**. Where sampling happens server-side the
 client cannot seed it, so a replicate varies the draw rather than controlling it.
 That is what makes the noise real and worth measuring.
 
+**And a repeat that reuses the last one's answers is not a repeat.** Responses
+are cached by content, and for one shipped version that cache spanned every
+replicate in a sweep — so the second replicate was handed the first one's
+answers and the spread between them, which is the whole basis of the resolution,
+was partly an artifact of the cache. Each replicate is now a separate `draw` and
+the cache is partitioned by it. The same replicate index at two coordinate
+values still shares: that is common random numbers, it sharpens the comparison
+between values, and it leaves the within-value spread the floor is derived from
+untouched. Which of the two a run used is in its journal, and an arena that
+cannot say is warned about rather than assumed innocent.
+
 ## Provenance
 
 Every derived number is a pure fold over an append-only journal. `sep replay` and

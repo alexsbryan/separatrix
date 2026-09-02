@@ -41,8 +41,7 @@ rather than reporting a number.**
 
 The reason is arithmetic. Each run yields 2 unknowable probes × 4 agents = 8
 Bernoulli observations, so per-sample noise is `sqrt(p(1-p)/8) ≈ 0.17` at
-p ≈ 0.4 — exactly the 0.167 measured. The midpoint sat 0.083 from the threshold,
-inside a resolution of 0.192.
+p ≈ 0.4. The midpoint sat 0.083 from the threshold, inside a resolution of 0.192.
 
 Raising replicates from 2 to 3 — which the first run's own note advised — did not
 help and could not: replicates cut the standard error by `√n`, so closing that
@@ -50,6 +49,32 @@ gap needs more than sixteen. **More absent probes per run is the cheap fix.**
 
 Reporting "the flip is near 2" would have been the easy output and a fabricated
 precision.
+
+#### Correction: the 0.167 is a floor, not a match
+
+This section previously said the predicted 0.17 was "exactly the 0.167
+measured." That agreement was not real, and the reason is a defect in this
+library that the run above was subject to.
+
+`Responder` held one response cache for the whole sweep, and the sweep called
+one arena once per replicate, so **replicates shared answers.** The journal
+records it: generation 0 of the second replicate is twenty cache hits and zero
+calls, byte-identical to the first. Only the mutated branch of each population
+varied between replicates, so the 8 observations behind each sample were not 8
+independent draws and `sqrt(p(1-p)/8)` does not describe them.
+
+The measured 0.167 is therefore a **lower bound** on this sampler's variability,
+not an estimate of it. The refusal stands and stands harder: understating noise
+makes a bracket look more resolvable, so a sweep that refused on suppressed
+noise would have refused on honest noise too. What does not stand is the claim
+that theory and measurement agreed.
+
+Fixed in `Responder.separate` / `sweep.draw_label`: replicates are separate
+draws and never share a cached answer, while the same replicate index across two
+coordinate values still does — common random numbers, declared in the journal
+rather than incidental. An arena that cannot say which it does is warned about.
+The regression is `pytest tests/test_draws.py`, where the pre-fix arena measures
+a noise floor of exactly zero in a sampler that alternates its answer every call.
 
 ```bash
 sep bracket studies/epistemic-garden.jsonl   # re-derives it, no model, no endpoint

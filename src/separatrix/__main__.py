@@ -136,7 +136,7 @@ def _cmd_run(args) -> int:
 
         bracket = sweep(arena, judge, study.coordinate, study.outcome,
                         budget=study.budget, replicates=study.replicates,
-                        config=study.config, journal=journal,
+                        paired=study.paired, config=study.config, journal=journal,
                         on_forecast=lambda f: print(f"forecast  "
                                                     f"{f.render(study.coordinate)}"))
     print()

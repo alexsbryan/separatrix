@@ -64,6 +64,14 @@ class Replay:
     def scenarios(self, config: Mapping[str, Any]) -> Sequence[Scenario]:
         return self._scenarios(config) if callable(self._scenarios) else self._scenarios
 
+    def draw(self, label: str) -> None:
+        """Nothing here is cached between draws — a scenario is data already in hand — so a
+        replicate is already independent and there is nothing to separate.
+
+        Declared rather than omitted: a sweep warns about an arena that cannot
+        say, because the silent case is one whose replicates share state and
+        nobody noticed."""
+
     def run(self, config: Mapping[str, Any], judge: Judge) -> Sequence[Ruling]:
         rulings: list[Ruling] = []
         for scenario in self.scenarios(config):

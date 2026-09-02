@@ -28,10 +28,17 @@ honesty_weight = 0.0
 #
 # The sweep refused to place the flip. The reason is arithmetic, not bad luck:
 # each run yields 2 unknowable probes x 4 agents = 8 Bernoulli observations, so
-# per-sample noise is sqrt(p(1-p)/8) ~ 0.17 at p ~ 0.4 — which is exactly the
-# 0.167 measured. Replicates only cut the standard error by sqrt(n), so closing
-# the 0.083 gap between the midpoint and the threshold would take more than 16
-# of them. MORE ABSENT PROBES PER RUN is the cheap fix; more replicates is not.
+# per-sample noise is sqrt(p(1-p)/8) ~ 0.17 at p ~ 0.4. Replicates only cut the
+# standard error by sqrt(n), so closing the 0.083 gap between the midpoint and
+# the threshold would take more than 16 of them. MORE ABSENT PROBES PER RUN is
+# the cheap fix; more replicates is not.
+#
+# CORRECTION: this block used to call 0.167 an exact match for that prediction.
+# It was not one. That run's replicates shared a response cache, so its 8
+# observations were not 8 independent draws and 0.167 is a LOWER BOUND on the
+# sampler. The refusal is unaffected — suppressed noise makes a bracket look
+# more resolvable, not less — but the agreement was not real. See FINDINGS.md
+# section 1 and tests/test_draws.py.
 [sweep]
 # What the game pays for admitting ignorance. At 0 the objective is truth-blind.
 coordinate  = "honesty_weight"

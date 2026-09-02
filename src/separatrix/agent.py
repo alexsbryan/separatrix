@@ -7,8 +7,9 @@ these populations are worth simulating: what gets selected is legible, and the
 champion can be read.
 
 `Responder` is the only path from an agent to a model. It owns the cache, so
-re-sweeping one coordinate reuses every sample the change did not touch, and it
-watches what the endpoint actually served — because an endpoint that starts
+re-sweeping one coordinate reuses every sample the change did not touch — within
+one DRAW, never across two, for the reason set out on `key` — and it watches
+what the endpoint actually served — because an endpoint that starts
 serving a different model mid-study has invalidated the comparison, and that
 must be visible rather than averaged in.
 """
@@ -49,8 +50,10 @@ class Responder:
 
     def __init__(self, chat: Chat, *, cache: Mapping[str, str] | None = None,
                  journal: Journal | None = None, system: str = DEFAULT_SYSTEM,
-                 render: Callable[[Situation, Agent], str] | None = None):
+                 render: Callable[[Situation, Agent], str] | None = None,
+                 draw: str = ""):
         self.chat = chat
+        self.draw = str(draw)
         self.cache: dict[str, str] = dict(cache or {})
         self.journal = journal
         self.system = system
@@ -65,11 +68,29 @@ class Responder:
         The agent's *id* is deliberately absent: two agents holding the same
         genome asked the same question are the same call, and paying twice for
         it at these sample costs is money set on fire.
+
+        The DRAW is present, and it is the field this class got wrong first. A
+        cache that spans replicates hands the second replicate the first one's
+        answers, so what was recorded as three draws is one draw and two copies
+        — and the noise estimated from them is smaller than the sampler's, which
+        makes a boundary look resolvable when it is not. Sampling noise is the
+        thing this library exists to respect, so it does not get to be a cache
+        hit. See `Responder.separate`.
         """
         return response_key(genome=agent.genome, situation=situation.id,
                             model=self.chat.model, system=self.system,
                             temperature=self.chat.temperature,
-                            max_tokens=self.chat.max_tokens)
+                            max_tokens=self.chat.max_tokens, draw=self.draw)
+
+    def separate(self, draw: str) -> None:
+        """Begin a new draw. Answers cached under a different one are not reused.
+
+        Partitioning rather than clearing, because a repeated label SHOULD hit:
+        that is what lets a sweep pay once for the parts of two coordinate
+        values that are identical, while keeping the replicates at each value
+        independent of each other.
+        """
+        self.draw = str(draw)
 
     def __call__(self, agent: Agent, situation: Situation) -> Response:
         key = self.key(agent, situation)

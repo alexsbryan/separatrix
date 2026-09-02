@@ -21,11 +21,19 @@ point. You get an interval and the reason it is that wide.
 client cannot seed it, so a "replicate" varies the draw and does not control it.
 That is what makes the noise real and worth measuring rather than an artifact to
 be configured away.
+
+**And a repeat that reuses the last one's answers is not a repeat.** The first
+version of this file shared one response cache across every replicate, so half
+of each sample was a copy of the sample before it and the noise floor came out
+smaller than the sampler's. Replicates are separated by `draw_label` now, and an
+arena that cannot say whether it separates them is warned about rather than
+trusted.
 """
 from __future__ import annotations
 
 import math
 import statistics
+import warnings
 from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable, Mapping, Protocol, Sequence
 
@@ -34,7 +42,7 @@ from .journal import Journal
 from .verdict import Ruling, Verdict
 
 __all__ = ["Coordinate", "Outcome", "Budget", "Forecast", "Bracket", "Arena",
-           "Search", "sweep", "bracket_from_records"]
+           "Search", "sweep", "bracket_from_records", "draw_label"]
 
 
 class Arena(Protocol):
@@ -42,6 +50,16 @@ class Arena(Protocol):
 
     def run(self, config: Mapping[str, Any], judge: Judge) -> Sequence[Ruling]:
         ...
+
+    def draw(self, label: str) -> None:
+        """Begin a new draw, discarding nothing but reusing nothing either.
+
+        An arena that caches model answers MUST partition them by this label,
+        or its replicates are one draw copied — see `Responder.key`. An arena
+        with nothing cached implements it empty and says so; what it must not
+        do is leave the question unanswered, which is why `sweep` warns about
+        an arena that does not have this method at all.
+        """
 
 
 @dataclass(frozen=True)
@@ -173,6 +191,22 @@ def _within_group_sd(*groups: Sequence[float]) -> float:
 def _se(noise: float, replicates: int) -> float:
     """Standard error of a mean of `replicates` draws."""
     return noise / math.sqrt(replicates)
+
+
+def draw_label(value: float, rep: int, *, paired: bool) -> str:
+    """Which draw a sample belongs to. One decider for the whole library.
+
+    Replicates at one coordinate value ALWAYS get different labels: that is the
+    correctness half, and the noise floor is estimated from exactly that spread.
+
+    Across values the default is to REPEAT the label — common random numbers.
+    The parts of two configurations that are identical (a seed population, a
+    first generation) are then paid for once and answered identically, which
+    sharpens the comparison between values without touching the within-value
+    spread the resolution is derived from. `paired=False` buys full
+    independence instead, at the cost of re-paying for every shared part.
+    """
+    return f"rep{rep}" if paired else f"{value:g}#rep{rep}"
 
 
 def _absent(verdict: Verdict, coord: Coordinate, note: str, **kw) -> Bracket:
@@ -314,6 +348,7 @@ def sweep(
     *,
     budget: Budget,
     replicates: int = 5,
+    paired: bool = True,
     config: Mapping[str, Any] | None = None,
     journal: Journal | None = None,
     on_forecast: Callable[[Forecast], None] | None = None,
@@ -347,16 +382,35 @@ def sweep(
                        f"budget of {budget.runs} runs cannot even measure noise, which "
                        f"needs {2 * replicates}. Nothing was spent.")
 
+    separates = callable(getattr(arena, "draw", None))
+    if journal:
+        journal.note("draws", separated=separates, paired=paired,
+                     arena=type(arena).__name__)
+    if not separates:
+        # Not an error — an arena with nothing cached is entitled to replicates
+        # that are already independent. But it did not say so, and the case that
+        # looks identical from here is an arena serving its first replicate's
+        # answers to the next two. Absence is reported, never assumed benign.
+        warnings.warn(
+            f"{type(arena).__name__} has no draw(label) method, so this sweep "
+            f"cannot separate replicates. If it caches model answers, its "
+            f"replicates are one draw copied and the noise floor below is not "
+            f"the sampler's.", RuntimeWarning, stacklevel=2)
+
     search = Search(coordinate, outcome, replicates, max_runs=budget.runs)
     while (value := search.next()) is not None:
         ys = []
         for rep in range(replicates):
+            label = draw_label(value, rep, paired=paired)
+            if separates:
+                arena.draw(label)
             rulings = arena.run(coordinate.at(config, value), judge)
             y = outcome.measure(rulings)
             ys.append(y)
             if journal:
                 journal.note("sample", coordinate=coordinate.name, value=value,
-                             rep=rep, outcome=y, name=outcome.name, rulings=len(rulings))
+                             rep=rep, draw=label if separates else None,
+                             outcome=y, name=outcome.name, rulings=len(rulings))
         search.observe(value, ys)
 
     bracket = search.result()

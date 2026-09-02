@@ -69,6 +69,12 @@ class Tournament:
             return p["temptation"]
         return p["punishment"]
 
+    def draw(self, label: str) -> None:
+        """Begin a new draw. Every replicate is a fresh one, so nothing this
+        arena cached for another replicate is reused as if it were a new
+        answer."""
+        self.responder.separate(label)
+
     def run(self, config: Mapping[str, Any], judge: Judge) -> Sequence[Ruling]:
         self.scores = {a.id: Score() for a in self.population}
         rulings: list[Ruling] = []

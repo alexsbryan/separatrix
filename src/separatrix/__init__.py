@@ -26,7 +26,7 @@ from .judges import FoldJudge, ProcessJudge
 from .judges import ProcessResult
 from .study import Study, load_study, resolve
 from .sweep import (Arena, Bracket, Budget, Coordinate, Forecast, Outcome, Search,
-                    bracket_from_records, sweep)
+                    bracket_from_records, draw_label, sweep)
 from .trial import Exchange, Response, Situation, Trial, digest, exchange
 from .validate import (fisher_exact_2x2, min_detectable_asymmetry, probe, validate,
                        youden_j)
@@ -45,7 +45,7 @@ __all__ = [
     "ProcessArena", "RowTrial", "MesaArena", "TrajectoryTrial", "rows_of",
     "Tournament",
     "Arena", "Coordinate", "Outcome", "Budget", "Forecast", "Bracket", "Search",
-    "sweep", "bracket_from_records",
+    "sweep", "bracket_from_records", "draw_label",
     "Study", "load_study", "resolve",
     "Journal", "Provenance", "Run", "replay", "read_records",
     "validate", "probe", "fisher_exact_2x2", "youden_j", "min_detectable_asymmetry",

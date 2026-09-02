@@ -86,6 +86,12 @@ class Diffusion:
         self.seed = seed
         self.reach: dict[str, list[int]] = {}
 
+    def draw(self, label: str) -> None:
+        """Begin a new draw. Every replicate is a fresh one, so nothing this
+        arena cached for another replicate is reused as if it were a new
+        answer."""
+        self.responder.separate(label)
+
     def run(self, config: Mapping[str, Any], judge: Judge) -> Sequence[Ruling]:
         threshold = float(config.get("reputation_threshold", 0.0))
         rng = random.Random(self.seed)

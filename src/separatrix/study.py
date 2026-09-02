@@ -55,6 +55,7 @@ class Study:
     outcome: Outcome | None
     budget: Budget
     replicates: int
+    paired: bool
     config: Mapping[str, Any]
     journal_path: Path
 
@@ -119,6 +120,7 @@ def load_study(path: str | Path) -> Study:
         budget=Budget(runs=int((sweep_cfg or {}).get("budget_runs", 40)),
                       per_run_calls=(sweep_cfg or {}).get("per_run_calls")),
         replicates=int((sweep_cfg or {}).get("replicates", 3)),
+        paired=bool((sweep_cfg or {}).get("paired", True)),
         config=dict(doc.get("config", {})),
         journal_path=root / study.get("journal", f"{study.get('name', 'study')}.jsonl"),
     )

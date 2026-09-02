@@ -21,6 +21,10 @@ class StepArena:
         self.param, self.flip, self.low, self.high = param, flip, low, high
         self.jitter, self.rng, self.calls = jitter, random.Random(seed), 0
 
+    def draw(self, label):
+        """Nothing is cached here, so a replicate is already independent. Said
+        out loud because a sweep does not assume it."""
+
     def run(self, config, judge):
         self.calls += 1
         base = self.high if config[self.param] > self.flip else self.low

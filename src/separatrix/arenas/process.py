@@ -51,6 +51,14 @@ class ProcessArena:
         self.timeout = timeout
         self.journal = journal
 
+    def draw(self, label: str) -> None:
+        """Nothing here is cached between draws — every run is a fresh subprocess — so a
+        replicate is already independent and there is nothing to separate.
+
+        Declared rather than omitted: a sweep warns about an arena that cannot
+        say, because the silent case is one whose replicates share state and
+        nobody noticed."""
+
     def run(self, config: Mapping[str, Any], judge: Judge) -> Sequence[Ruling]:
         try:
             proc = subprocess.run(

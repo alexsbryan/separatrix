@@ -96,6 +96,12 @@ class Evolution:
     def situations(self, config: Mapping[str, Any]) -> Sequence[Situation]:
         return self._world(config) if callable(self._world) else self._world
 
+    def draw(self, label: str) -> None:
+        """Begin a new draw. Every replicate is a fresh one, so nothing this
+        arena cached for another replicate is reused as if it were a new
+        answer."""
+        self.responder.separate(label)
+
     def run(self, config: Mapping[str, Any], judge: Judge) -> Sequence[Ruling]:
         situations = self.situations(config)
         population = [Agent(id=f"a{i}", genome=g) for i, g in enumerate(self.seeds)]
