@@ -283,6 +283,35 @@ The two passes are worth what their power says they are worth. `commons` and
 reading ambiguity — at 36% and 27% minimum detectable asymmetry, those are
 statements that no LARGE bias is present, and not much more.
 
+## 6. Replicates were sharing a response cache, so the noise floor was not the sampler's
+
+**Status: found, fixed, and gated.**
+
+`Responder` held one content-addressed cache for a whole sweep, and the sweep
+called one arena once per replicate — so the second replicate was served the
+first one's answers. The retracted journal records it plainly: generation 0 of
+draw 2 is twenty cache hits and zero calls, byte-identical to draw 1. Only the
+mutated branch of each population varied.
+
+The cost is not money, it is the resolution. A bracket's width comes from the
+spread between replicates, and copies do not spread, so the floor came out below
+the sampler's own variability and a search could believe it had resolved
+something it had not. That is the failure this library exists to refuse, being
+done to itself, one level up from the judge.
+
+The retracted run's `0.167` is therefore a **lower bound** on that sampler, not
+an estimate of it, and the claim that it matched `sqrt(p(1-p)/8)` was reading
+agreement into a number the model does not describe.
+
+Replicates are separate draws now (`Responder.separate`, `sweep.draw_label`),
+while the same replicate index across two coordinate values still shares —
+common random numbers, declared in the journal rather than incidental. An arena
+that cannot say which it does is warned about rather than trusted.
+
+The gate is watched failing: in `tests/test_draws.py` the pre-fix arena measures
+a noise floor of exactly **0.0** in a sampler that alternates its answer on
+every call.
+
 ## Unrun
 
 The sweeps for `commons`, `telephone` and `trust_game` have not been run against
