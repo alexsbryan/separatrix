@@ -90,17 +90,36 @@ class Exchange:
         return digest("exchange", self.situation.id, self.response.id)
 
     def facts(self) -> Mapping[str, Any]:
+        """What a judge may read: the situation's own fields, then the exchange.
+
+        `Situation.meta` is in here, and leaving it out was a defect that ran
+        for a while. A study whose judge needs to know the CONFIGURATION a trial
+        happened under — what the pool regenerated at, what defecting paid —
+        reads it from the facts, and an arena that put it in `meta` had it
+        silently dropped, so the judge fell back to a default and the swept
+        coordinate never reached it. The commons study measured sustainability
+        against a fixed regeneration rate while sweeping the regeneration rate.
+
+        The exchange's own keys win, exactly as the journal's reserved keys do:
+        a situation carrying `text` in its meta must not be able to replace the
+        reply the judge is supposed to be reading.
+        """
         return {
+            **dict(self.situation.meta),
             "prompt": self.situation.prompt,
             "evidence": list(self.situation.evidence),
             "kind": self.situation.kind,
             "text": self.response.text,
             "by": self.response.by,
+            # Why the model stopped. A judge that cannot see this cannot tell a
+            # short answer from an answer that was cut off.
+            "finish": self.response.meta.get("finish", ""),
         }
 
 
 def exchange(prompt: str, text: str, *, evidence: Sequence[str] = (),
-             kind: str = "unspecified", by: str = "anonymous") -> Exchange:
+             kind: str = "unspecified", by: str = "anonymous",
+             meta: Mapping[str, Any] | None = None) -> Exchange:
     """Build an `Exchange` without assembling both halves by hand."""
-    s = Situation(prompt=prompt, evidence=evidence, kind=kind)
+    s = Situation(prompt=prompt, evidence=evidence, kind=kind, meta=dict(meta or {}))
     return Exchange(situation=s, response=Response(text=text, by=by, situation_id=s.id))

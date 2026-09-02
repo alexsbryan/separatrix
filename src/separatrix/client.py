@@ -16,12 +16,14 @@ alias, which would be the same mistake wearing a disguise.
 from __future__ import annotations
 
 import json
+import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
-__all__ = ["Completion", "Chat", "ChatError", "strip_think", "UNREPORTED"]
+__all__ = ["Completion", "Chat", "ChatError", "strip_think", "retry_after",
+           "UNREPORTED"]
 
 UNREPORTED = "(server reported no model)"
 
@@ -50,7 +52,49 @@ def strip_think(text: str) -> str:
 class Completion:
     text: str
     served: str                                  # from the response body
+    finish: str = ""                             # why the model stopped
     raw: Mapping[str, Any] = field(default_factory=dict)
+
+    @property
+    def cut_off(self) -> bool:
+        """The server stopped this at the token limit, mid-sentence.
+
+        Worth its own field because a truncated reply is not a short one. An
+        agent three lines into "here is why the text does not say" that gets cut
+        before it says so has not declined and has not answered, and scoring it
+        as either invents an observation.
+        """
+        return self.finish == "length"
+
+
+BUSY = (429, 503)
+MAX_WAIT = 90.0
+
+
+def retry_after(exc: urllib.error.HTTPError, body: str) -> float | None:
+    """How long the server asked us to wait, or None if it did not ask.
+
+    A server saying "queue position 3, about 40 seconds" has not failed and has
+    not refused: it has told the client exactly what to do, and a client that
+    reads that as an error throws away work that was going to succeed. Ten
+    minutes of harvesting died this way once.
+
+    The hint is honoured, not guessed at, and it is capped — a server asking for
+    an hour is a server to give up on, and silently waiting an hour is worse
+    than saying so.
+    """
+    if exc.code not in BUSY:
+        return None
+    try:
+        hint = json.loads(body).get("retry_after_secs")
+    except (json.JSONDecodeError, AttributeError, TypeError):
+        hint = None
+    if hint is None:
+        hint = exc.headers.get("Retry-After") if exc.headers else None
+    try:
+        return min(float(hint), MAX_WAIT) if hint is not None else 1.0
+    except (TypeError, ValueError):
+        return 1.0
 
 
 @dataclass
@@ -62,6 +106,7 @@ class Chat:
     timeout: float = 120.0
     temperature: float = 0.8
     max_tokens: int = 512
+    retries: int = 4          # only for a server that ASKED us to wait
 
     @property
     def endpoint(self) -> str:
@@ -80,19 +125,7 @@ class Chat:
         if response_format:
             payload["response_format"] = dict(response_format)
 
-        req = urllib.request.Request(
-            self.endpoint, data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"}, method="POST")
-        try:
-            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                body = json.loads(resp.read().decode("utf-8"))
-        except urllib.error.HTTPError as exc:
-            raise ChatError(f"{self.endpoint} returned {exc.code}: "
-                            f"{exc.read()[:400].decode('utf-8', 'replace')}") from None
-        except (urllib.error.URLError, TimeoutError) as exc:
-            raise ChatError(f"cannot reach {self.endpoint}: {exc}") from None
-        except json.JSONDecodeError as exc:
-            raise ChatError(f"{self.endpoint} did not return JSON: {exc}") from None
+        body = self._post(payload)
 
         try:
             text = body["choices"][0]["message"]["content"]
@@ -102,7 +135,37 @@ class Chat:
 
         # The whole reason this function exists in one place.
         served = str(body.get("model") or "").strip() or UNREPORTED
-        return Completion(text=strip_think(text or ""), served=served, raw=body)
+        try:
+            finish = str(body["choices"][0].get("finish_reason") or "")
+        except (KeyError, IndexError, TypeError):
+            finish = ""
+        return Completion(text=strip_think(text or ""), served=served,
+                          finish=finish, raw=body)
+
+    def _post(self, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        """One request, waiting when and only when the server asks us to."""
+        waited = 0
+        while True:
+            req = urllib.request.Request(
+                self.endpoint, data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"}, method="POST")
+            try:
+                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                    return json.loads(resp.read().decode("utf-8"))
+            except urllib.error.HTTPError as exc:
+                text = exc.read()[:400].decode("utf-8", "replace")
+                pause = retry_after(exc, text)
+                if pause is not None and waited < self.retries:
+                    waited += 1
+                    time.sleep(pause)
+                    continue
+                busy = f" after {waited} wait(s) it asked for" if waited else ""
+                raise ChatError(f"{self.endpoint} returned {exc.code}{busy}: "
+                                f"{text}") from None
+            except (urllib.error.URLError, TimeoutError) as exc:
+                raise ChatError(f"cannot reach {self.endpoint}: {exc}") from None
+            except json.JSONDecodeError as exc:
+                raise ChatError(f"{self.endpoint} did not return JSON: {exc}") from None
 
     def probe_served(self) -> str:
         """One minimal call, to learn what this alias actually resolves to.

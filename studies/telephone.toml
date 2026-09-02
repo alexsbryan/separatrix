@@ -11,10 +11,25 @@ name    = "telephone"
 judge   = "telephone:judge"
 arena   = "telephone:arena"
 journal = "telephone.jsonl"
+cases   = "telephone:cases"
+
+# The arms are PERSONAS, not the two ends of the sweep. The coordinate here
+# decides who is allowed to speak, not what a speaker says — so the way a judge
+# could invent an effect is by reading a careful paraphrase better than a vivid
+# one, and then scoring the personas the institution happens to silence.
+[cases]
+probes = "telephone:probes"
+draws  = 12   # the careful persona repeats itself; 6 left the arm underpowered
+out    = "telephone-cases.jsonl"
+
+[cases.arms]
+careful = "You are careful and precise. Preserve the exact details and numbers you were told, and add nothing."
+vivid   = "You love a vivid story. Make what you pass along more impressive, with specific-sounding details."
 
 [endpoint]
 model      = "primary"
-max_tokens = 120
+max_tokens = 300   # 120 cut the vivid persona off mid-retelling
+workers    = 2    # a wall-clock setting; the calls made are identical at any value
 
 [sweep]
 # How much standing a teller must keep to be believed. 0 quarantines nobody,

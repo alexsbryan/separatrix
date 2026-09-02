@@ -29,7 +29,7 @@ def test_an_exchange_is_a_trial():
 def test_facts_are_what_a_judge_may_read():
     e = exchange("q?", "an answer", evidence=("e",), kind="absent", by="Ada")
     assert e.facts() == {"prompt": "q?", "evidence": ["e"], "kind": "absent",
-                         "text": "an answer", "by": "Ada"}
+                         "text": "an answer", "by": "Ada", "finish": ""}
 
 
 def test_evidence_is_frozen_into_a_tuple():
@@ -41,3 +41,32 @@ def test_evidence_is_frozen_into_a_tuple():
 
 def test_an_explicit_id_is_respected():
     assert Response(text="t", id="fixed").id == "fixed"
+
+
+def test_the_situation_config_reaches_the_judge():
+    """The defect this closes made a whole study meaningless without failing
+    anything: `commons` reads the regeneration rate a trial happened under, the
+    arena put it in `Situation.meta`, `facts()` dropped it, and the judge fell
+    back to its default — so sustainability was scored against a fixed
+    regeneration rate while the sweep varied the regeneration rate.
+
+    It was found by a bias probe, not by a test, and it is a test now.
+    """
+    from separatrix import Situation
+    e = exchange("how many units?", "I take 12.", kind="harvest",
+                 meta={"regeneration": 40.0, "pool": 100.0})
+    assert e.facts()["regeneration"] == 40.0
+    assert e.facts()["pool"] == 100.0
+    assert e.facts()["text"] == "I take 12."
+
+
+def test_the_exchanges_own_keys_beat_anything_in_the_meta():
+    """Same rule as the journal's reserved keys, for the same reason: a
+    situation carrying `text` must not be able to replace the reply the judge is
+    supposed to be reading."""
+    e = exchange("q?", "the real answer", kind="absent",
+                 meta={"text": "a replacement", "kind": "present", "by": "someone"})
+    facts = e.facts()
+    assert facts["text"] == "the real answer"
+    assert facts["kind"] == "absent"
+    assert facts["by"] == "anonymous"

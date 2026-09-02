@@ -78,3 +78,36 @@ def test_the_cache_prevents_a_second_identical_call():
     answering(r, agent, sit)
     answering(r, Agent(id="a1", genome=agent.genome), sit)
     assert (r.hits, r.misses) == (1, 1)
+
+
+@live
+def test_the_shipped_reader_judge_survives_its_own_probe():
+    """The tier-ESTIMATED judge, against the labelled replies this study really
+    produced. Skipped without an endpoint, because a judge that reads with a
+    model cannot be probed without one — and pretending otherwise is how a
+    suite comes to report an instrument it never checked.
+    """
+    import sys
+    from pathlib import Path
+
+    studies = Path(__file__).parent.parent / "studies"
+    sys.path.insert(0, str(studies))
+    from separatrix import Tier, Verdict, load_study, probe, resolve
+
+    study = load_study(studies / "epistemic_garden.toml")
+    assert study.judge.tier is Tier.ESTIMATED
+    cases = resolve(study.cases_ref, root=studies)()
+    assert len(cases) >= 20
+
+    try:
+        probed = probe(study.judge, cases)
+    except Exception as exc:                       # an endpoint mid-reload
+        pytest.skip(f"endpoint present but not answering: {exc}")
+
+    v = probed.validation()
+    assert v.verdict in (Verdict.PASSED, Verdict.FAILED, Verdict.COULD_NOT_JUDGE)
+    # The assertion is not that it passes. It is that the probe REACHED a
+    # verdict on it and that verdict decides whether it may run — which is the
+    # only guarantee this library offers about a reader.
+    assert v.cases == len(cases) and v.bias is not None
+    assert v.usable() == v.verdict.is_pass()

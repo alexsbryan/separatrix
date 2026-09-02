@@ -109,10 +109,17 @@ class Evolution:
         final: list[Ruling] = []
 
         for gen in range(self.generations):
+            # The whole generation is asked at once. Nothing in it depends on
+            # anything else in it — agents do not see each other here, that is
+            # what `Tournament` is for — so the only thing serialising it was
+            # the network. Judging stays in a fixed order below, so a run with
+            # workers > 1 produces the same rulings in the same sequence.
+            answers = self.responder.many([(agent, s) for agent in population
+                                           for s in situations])
             scored: list[tuple[float, Agent, list[Ruling]]] = []
-            for agent in population:
-                rulings = [judge.rule(Exchange(s, self.responder(agent, s)))
-                           for s in situations]
+            for i, agent in enumerate(population):
+                rulings = [judge.rule(Exchange(s, answers[i * len(situations) + j]))
+                           for j, s in enumerate(situations)]
                 scored.append((self.fitness(rulings, config), agent, rulings))
             scored.sort(key=lambda row: row[0], reverse=True)
             self.history.append(Generation(gen, scored))

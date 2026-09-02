@@ -11,8 +11,11 @@ load-bearing detail. A study with a grounding oracle available should use it
 instead, as a declared ESTIMATED tier — the point of the tier system is that
 either is allowed and neither is silent about which it is.
 """
-from separatrix import (Agent, Claim, Diffusion, FoldJudge, LabeledCase,
-                        Responder, RowTrial, Verdict)
+from separatrix import (Agent, Claim, Diffusion, FoldJudge, Responder, Situation,
+                        labelled)
+from separatrix.arenas.diffusion import RETELL
+
+CASES = __file__.replace("telephone.py", "telephone-cases.jsonl")
 
 TRUE = Claim(id="orchids", grounded=True,
              statement="The Keeper's ledger records thirty-seven rare orchids.",
@@ -52,22 +55,24 @@ judge = FoldJudge(faithful, id="telephone-gm@1",
                   observe=lambda f: {"kind": f["kind"]})
 
 
+def probes(config=None):
+    """The retelling, at the first hop, for both claims.
+
+    What a judge has to read here is a paraphrase, and the risk is that it reads
+    a CAREFUL paraphrase better than a VIVID one — which would score the
+    personas rather than the institution, and the institution is what the
+    coordinate moves.
+    """
+    del config
+    return [Situation(prompt=RETELL.format(heard=claim.statement),
+                      evidence=(claim.source,),
+                      kind="grounded" if claim.grounded else "ungrounded",
+                      meta={"claim": claim.id})
+            for claim in (TRUE, FALSE)]
+
+
 def cases():
-    """Arms are the two ends of the institution coordinate — an ungoverned
-    society and a governed one — so a judge that reads governed retellings
-    better than ungoverned ones is caught before it can invent an effect."""
-    out = []
-    for i in range(10):
-        for arm in ("ungoverned", "governed"):
-            out += [
-                LabeledCase(RowTrial({"text": f"The ledger records thirty-seven "
-                                              f"orchids ({i}).", "kind": "grounded"},
-                                     {}, i), Verdict.PASSED, arm=arm),
-                LabeledCase(RowTrial({"text": f"The ledger records around forty "
-                                              f"orchids ({i}).", "kind": "grounded"},
-                                     {}, i), Verdict.FAILED, arm=arm),
-            ]
-    return out
+    return labelled(CASES)
 
 
 def false_reach(rulings):
@@ -80,5 +85,6 @@ def false_reach(rulings):
 def arena(*, study, journal):
     return Diffusion([TRUE, FALSE],
                      [Agent(id=n, genome=g) for n, g in PERSONAS],
-                     responder=Responder(study.chat, journal=journal),
+                     responder=Responder(study.chat, journal=journal,
+                                          workers=study.workers),
                      rounds=4, depth=5, journal=journal)

@@ -114,8 +114,34 @@ def test_sweeping_the_temptation_brackets_where_defection_stops_paying():
     b = sweep(Fresh(), judge(), Coordinate("temptation", 0.0, 6.0),
               Outcome(cooperation, threshold=0.5, name="cooperation"),
               budget=Budget(runs=20), replicates=2)
-    # Cooperation here is a property of the fixed genomes, not of the payoff, so
-    # the honest answer is that no flip exists in this range — and the sweep says
-    # so rather than bisecting noise into a boundary.
+    # The fake model answers from its genome and ignores the prompt, so
+    # cooperation here is a property of the genomes and not of the payoff — and
+    # the honest answer is that no flip exists in this range. The sweep says so
+    # rather than bisecting noise into a boundary. Against a real model the
+    # payoffs DO reach the agent (see the test below), which is what makes the
+    # coordinate mean anything.
     assert b.verdict is Verdict.COULD_NOT_JUDGE
     assert "indistinguishable" in b.note
+
+
+def test_the_swept_payoff_reaches_the_agent_and_not_only_the_scoring():
+    """A coordinate the agents never see cannot move them.
+
+    For one shipped version `temptation` reached the payoff arithmetic and
+    nothing else, so the study asking where defection stops paying was a null
+    control wearing a question's clothes. It is in the prompt now, and this is
+    the test that says so.
+    """
+    chat = FakeChat("I cooperate.")
+    arena = Tournament([Agent(id="a", genome="x"), Agent(id="b", genome="y")],
+                       responder=Responder(chat), rounds=2)
+    arena.run({"temptation": 7.5, "reward": 3.0}, judge())
+
+    asked = "\n".join(user for _, user in chat.calls)
+    assert "7.5" in asked, "the temptation the sweep set never reached an agent"
+    assert "3" in asked
+
+    other = FakeChat("I cooperate.")
+    Tournament([Agent(id="a", genome="x"), Agent(id="b", genome="y")],
+               responder=Responder(other), rounds=2).run({"temptation": 1.5}, judge())
+    assert "1.5" in "\n".join(u for _, u in other.calls)

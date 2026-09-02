@@ -26,8 +26,19 @@ from ..verdict import Ruling
 
 __all__ = ["Tournament"]
 
-FIRST = "You are meeting someone for the first time. Do you cooperate or defect?"
-LATER = ("History with this partner (most recent last):\n{history}\n\n"
+# The payoffs are IN THE PROMPT, and that is not decoration. This arena's whole
+# point is that sweeping the payoff matrix sweeps the incentive — and an agent
+# that is never told what defecting pays cannot respond to the coordinate at
+# all. For one shipped version they were not, so `temptation` reached the
+# scoring arithmetic and never reached a single agent, and the study attached to
+# it could only ever return "no flip in range": a null control by accident,
+# advertised as a question about where defection stops paying.
+PAYOFFS = ("If you both cooperate you each get {reward:g}. If you defect and they "
+           "cooperate you get {temptation:g} and they get {sucker:g}. If you both "
+           "defect you each get {punishment:g}.")
+FIRST = (PAYOFFS + "\n\nYou are meeting someone for the first time. "
+         "Do you cooperate or defect?")
+LATER = (PAYOFFS + "\n\nHistory with this partner (most recent last):\n{history}\n\n"
          "Do you cooperate or defect?")
 
 # Classic prisoner's-dilemma payoffs; every one of them is overridable by config.
@@ -84,7 +95,7 @@ class Tournament:
             for rnd in range(self.rounds):
                 moves, round_rulings = {}, {}
                 for me, them in ((a, b), (b, a)):
-                    situation = self._situation(history, me is a)
+                    situation = self._situation(history, me is a, config)
                     ruling = judge.rule(Exchange(situation, self.responder(me, situation)))
                     # A PASSED verdict means the judge read the move as cooperation.
                     moves[me.id] = ruling.verdict.is_pass()
@@ -115,13 +126,17 @@ class Tournament:
                 for k, v in sorted(self.scores.items())})
         return rulings
 
-    def _situation(self, history, is_first: bool) -> Situation:
+    def _situation(self, history, is_first: bool, config: Mapping[str, Any]) -> Situation:
+        p = {**DEFAULT_PAYOFFS, **{k: float(v) for k, v in config.items()
+                                   if k in DEFAULT_PAYOFFS}}
         if not history:
-            return Situation(prompt=FIRST, kind="opening")
+            return Situation(prompt=FIRST.format(**p), kind="opening",
+                             meta=dict(p))
         lines = [f"  round {i + 1}: you {'cooperated' if (m if is_first else t) else 'defected'}, "
                  f"they {'cooperated' if (t if is_first else m) else 'defected'}"
                  for i, (m, t) in enumerate(history)]
-        return Situation(prompt=LATER.format(history="\n".join(lines)), kind="continuing")
+        return Situation(prompt=LATER.format(history="\n".join(lines), **p),
+                         kind="continuing", meta=dict(p))
 
     # ── what a sweep measures ───────────────────────────────────────────────
 

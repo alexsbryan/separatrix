@@ -59,8 +59,14 @@ budget_runs = 20
 ```
 
 ```bash
-sep run quiet_hours.toml --cases quiet_hours:cases
+sep probe quiet_hours.toml    # is the instrument fair? spends nothing else
+sep run   quiet_hours.toml    # refuses to spend if the probe did not pass
 ```
+
+The study names its own cases (`cases = "quiet_hours:cases"` under `[study]`),
+so probing is not something a caller has to remember on the command line. A
+study that declares none leaves its judge NEVER_RAN, which is not a pass, and
+`sep run` refuses.
 
 ## Writing the four pieces
 
@@ -96,10 +102,47 @@ pure fold and one from a model wrapper look identical from here.
 
 ### The cases
 
-The `arm` field is the load-bearing one. Draw cases from **both ends of the
+The `arm` field is the load-bearing one. Cases come from **both ends of the
 coordinate you intend to sweep**, phrased the way each end actually phrases
 itself. A judge that reads one end better than the other will invent a
 difference between them.
+
+**Do not write them yourself.** This is the strongest advice in the file and it
+was bought at some cost: the garden study's cases were hand-written, every judge
+shown them scored 40/40, and one of those judges was wrong about 71% of one
+arm's real replies. Invented cases are what the author already believes the two
+arms sound like, which is exactly the belief a probe is supposed to test.
+
+Harvest them instead:
+
+```toml
+[cases]
+probes = "mystudy:absent_probes"    # the situations where judgement is hard
+draws  = 4
+out    = "mystudy-cases.jsonl"
+
+[cases.arms]
+fabricator = "You are a confident expert. Always give a definite answer."
+grounder   = "Answer only what the given facts support."
+```
+
+```bash
+sep harvest mystudy.toml       # asks both arms, keeps the distinct replies
+```
+
+Then label each row's `expected` — `"passed"` or `"failed"` — by reading it.
+That judgement is the ground truth every other number in the study rests on, it
+is the one step nobody can automate for you, and the file is committed so a
+reader can disagree with a specific line rather than with your method.
+
+An arm is a **genome** where the coordinate acts through selection, and a
+**config** where it acts through the situation an agent is shown:
+
+```toml
+[cases.arms.tempted]
+genome = "Play to get the best outcome you can."
+config = { temptation = 8.0 }
+```
 
 Match the **trial shape** to what the judge reads. A judge reading `f["hour"]`
 cannot be probed with cases carrying utterances — it will score zero
@@ -107,6 +150,22 @@ discrimination and the study will be refused, which is the gate working.
 
 Ten per arm is the floor and it is a weak pass; the probe will tell you the
 smallest gap that many cases could have caught.
+
+### Probing a judge that reads with a model
+
+The tier the whole library is for. A model estimates ONE field; your rule still
+decides, and it should be the same rule your fold judge uses — then the two are
+comparable and "how much did the reader change the answer" is a number.
+
+```python
+def reader(*, chat):                       # a FACTORY: it needs the endpoint
+    return ChatJudge(chat, id="mine-reader@1", field="declined",
+                     asks="Does the reply decline to answer?",
+                     decide=rule, observe=observed)
+```
+
+Declare it in the TOML as `judge = "mystudy:reader"`. It is probed exactly like
+a fold and refused exactly like one.
 
 ### The fitness or outcome
 
@@ -155,6 +214,29 @@ at how many observations each run actually yields: replicates only cut the
 standard error by `√n`, so a noisy outcome is usually cheaper to fix by
 measuring more per run than by running more times. `FINDINGS.md §1` works
 through that arithmetic on a real run.
+
+## Two settings that are not about the experiment
+
+```toml
+[endpoint]
+workers = 2        # how many calls in flight; the calls MADE are identical
+
+[sweep]
+paired = true      # the same replicate index shares answers across values
+```
+
+`workers` is a fact about the server's willingness to answer several at once,
+not about your study: `Responder.many` dispatches distinct cache keys, so the
+rulings and the cache counts come out the same at any value. Start at 2 — a
+server that queues will say so, and this client waits the length the server asks
+for rather than reporting a busy server as a failure.
+
+`paired` is common random numbers. Replicates at one coordinate value are ALWAYS
+separate draws — the noise floor is measured from exactly that spread — but the
+same replicate index at two different values shares its answers by default,
+which pays once for the parts of two configurations that are identical and
+sharpens the comparison between them. Set it false to buy full independence at
+full price.
 
 ## Checking a result
 

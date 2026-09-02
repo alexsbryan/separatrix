@@ -3,9 +3,16 @@
 from pathlib import Path
 
 import pytest
-from separatrix import Verdict, load_study, resolve, validate
+from separatrix import Tier, Verdict, load_study, resolve, validate
 
 STUDIES = sorted((Path(__file__).parent.parent / "studies").glob("*.toml"))
+
+
+def _cases(study):
+    ref = study.cases_ref
+    assert ref, f"{study.name} declares no cases, so its judge cannot be probed"
+    cases = resolve(ref, root=study.path.parent)
+    return cases() if callable(cases) else cases
 
 
 def test_there_are_studies_to_check():
@@ -13,14 +20,28 @@ def test_there_are_studies_to_check():
 
 
 @pytest.mark.parametrize("path", STUDIES, ids=lambda p: p.stem)
-def test_a_shipped_study_loads_and_its_judge_passes_its_own_probe(path):
-    """A study whose judge cannot be probed cannot be run, so shipping one is
-    shipping something nobody can use."""
+def test_a_shipped_study_loads_and_declares_what_probes_it(path):
     study = load_study(path)
     assert study.name and study.coordinate and study.outcome
+    assert study.cases_ref, "a study that declares no cases cannot be run at all"
+    assert len(_cases(study)) >= 20
 
-    cases = resolve(f"{path.stem}:cases", root=path.parent)()
-    v = validate(study.judge, cases)
+
+@pytest.mark.parametrize("path", STUDIES, ids=lambda p: p.stem)
+def test_a_shipped_fold_judge_passes_its_own_probe(path):
+    """A study whose judge cannot be probed cannot be run, so shipping one is
+    shipping something nobody can use.
+
+    Only the folds are checked here, and that is not an exemption for the rest:
+    an ESTIMATED judge cannot be probed without the endpoint it reads with, so
+    its probe belongs in `test_live.py` where it can be skipped honestly rather
+    than in a suite that must pass on a laptop with no model.
+    """
+    study = load_study(path)
+    if study.judge.tier is not Tier.FOLD:
+        pytest.skip(f"{study.judge.id} is tier={study.judge.tier.value}; probing it "
+                    f"needs a model (see tests/test_live.py)")
+    v = validate(study.judge, _cases(study))
     assert v.verdict is Verdict.PASSED, f"{study.name}: {v.note}"
     assert v.discrimination is not None and v.discrimination > 0.2
     assert set(v.bias.arms) and len(v.bias.arms) == 2

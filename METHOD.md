@@ -30,7 +30,19 @@ between two policies the real oracle showed were identical (bare-answer 22% → 
 pass 73% → 94%, p = 0.012 — all of it artifact).
 
 Being a pure fold is the easiest way to get independence. It is not the
-definition of it.
+definition of it — and this project has since done the same thing to itself with
+a fold. The garden study's keyword judge did not know the phrasings a
+confidently-worded genome uses to decline (`"impossible to determine"`, `"there
+is no mention of"`) while it did know `"I don't know"`, which is the phrase the
+high end of the coordinate selects for. Same shape, same monotone gradient in
+vocabulary, published for a month. `FINDINGS.md §1` is the retraction.
+
+What let it through was not the tier. It was the cases: hand-written ones, in
+which the confident arm declined by saying `"That is not stated in the
+sources"` — a phrase the list knows. **A probe is only as good as what it is
+fed, and cases invented at a keyboard are what the author already believes the
+two arms sound like.** `sep harvest` exists because of that: the cases come from
+the arms.
 
 ### Three tiers, declared
 

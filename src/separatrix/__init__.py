@@ -22,9 +22,10 @@ from .arenas import (Claim, Diffusion, Evolution, MesaArena, ProcessArena, Repla
                      Reputation, RowTrial, Scenario, TrajectoryTrial, Tournament,
                      llm_rewrite, rows_of)
 from .client import Chat, ChatError, Completion, strip_think
-from .judges import FoldJudge, ProcessJudge
-from .judges import ProcessResult
-from .study import Study, load_study, resolve
+from .judges import ChatJudge, FoldJudge, ProcessJudge
+from .judges import ProcessResult, read_yes_no
+from .cases import arm_spec, counts, harvest, labelled
+from .study import CaseSource, Study, load_study, resolve
 from .sweep import (Arena, Bracket, Budget, Coordinate, Forecast, Outcome, Search,
                     bracket_from_records, draw_label, sweep)
 from .trial import Exchange, Response, Situation, Trial, digest, exchange
@@ -38,7 +39,7 @@ __all__ = [
     "Verdict", "Ruling",
     "Trial", "Situation", "Response", "Exchange", "exchange", "digest",
     "Judge", "Tier", "Validation", "Validated", "LabeledCase", "BiasResult", "BaseJudge",
-    "FoldJudge", "ProcessJudge", "ProcessResult",
+    "FoldJudge", "ChatJudge", "read_yes_no", "ProcessJudge", "ProcessResult",
     "Chat", "Completion", "ChatError", "strip_think",
     "Agent", "Responder", "Evolution", "llm_rewrite",
     "Diffusion", "Claim", "Reputation", "Replay", "Scenario",
@@ -46,7 +47,7 @@ __all__ = [
     "Tournament",
     "Arena", "Coordinate", "Outcome", "Budget", "Forecast", "Bracket", "Search",
     "sweep", "bracket_from_records", "draw_label",
-    "Study", "load_study", "resolve",
+    "Study", "CaseSource", "load_study", "resolve", "harvest", "labelled", "counts", "arm_spec",
     "Journal", "Provenance", "Run", "replay", "read_records",
     "validate", "probe", "fisher_exact_2x2", "youden_j", "min_detectable_asymmetry",
 ]

@@ -165,3 +165,19 @@ def test_probe_pairs_the_judge_with_its_own_validation():
     assert paired.id == raw.id and paired.tier is raw.tier
     assert paired.rule(TRIAL).verdict is raw.rule(TRIAL).verdict
     assert raw.validation().verdict is Verdict.NEVER_RAN     # untouched
+
+
+def test_a_fold_judge_refuses_a_reply_that_was_cut_off():
+    """Structural, not per-study. Every study that judges text would otherwise
+    have to remember this, and a rule that has to be remembered is not one."""
+    from separatrix import FoldJudge, Response, Situation, Verdict
+    from separatrix.trial import Exchange
+
+    sit = Situation(prompt="who tends it?", kind="absent")
+    finished = Exchange(sit, Response(text="I don't know.", situation_id=sit.id,
+                                      meta={"finish": "stop"}))
+    truncated = Exchange(sit, Response(text="To determine this we must",
+                                       situation_id=sit.id, meta={"finish": "length"}))
+    j = FoldJudge(lambda f: "know" in f["text"], id="k@1")
+    assert j.rule(finished).verdict is Verdict.PASSED
+    assert j.rule(truncated).verdict is Verdict.COULD_NOT_JUDGE

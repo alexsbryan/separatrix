@@ -15,6 +15,8 @@ must be visible rather than averaged in.
 """
 from __future__ import annotations
 
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field, replace
 from typing import Any, Callable, Mapping, Sequence
 
@@ -51,16 +53,19 @@ class Responder:
     def __init__(self, chat: Chat, *, cache: Mapping[str, str] | None = None,
                  journal: Journal | None = None, system: str = DEFAULT_SYSTEM,
                  render: Callable[[Situation, Agent], str] | None = None,
-                 draw: str = ""):
+                 draw: str = "", workers: int = 1):
         self.chat = chat
         self.draw = str(draw)
+        self.workers = max(1, int(workers))
+        self._lock = threading.Lock()
         self.cache: dict[str, str] = dict(cache or {})
+        self.finishes: dict[str, str] = {}
         self.journal = journal
         self.system = system
         self.render = render or (lambda s, a: s.prompt if not s.evidence else
                                  "\n".join([*[f"- {e}" for e in s.evidence], "", s.prompt]))
         self.served: set[str] = set()
-        self.hits = self.misses = 0
+        self.hits = self.misses = self.truncated = 0
 
     def key(self, agent: Agent, situation: Situation) -> str:
         """Everything that would change the answer, and nothing that would not.
@@ -94,21 +99,64 @@ class Responder:
 
     def __call__(self, agent: Agent, situation: Situation) -> Response:
         key = self.key(agent, situation)
-        if (cached := self.cache.get(key)) is not None:
-            self.hits += 1
+        with self._lock:
+            cached = self.cache.get(key)
+            if cached is not None:
+                self.hits += 1
+        if cached is not None:
             return Response(text=cached, by=agent.id, situation_id=situation.id,
-                            meta={"cached": True})
+                            meta={"cached": True,
+                                  "finish": self.finishes.get(key, "")})
 
-        self.misses += 1
+        with self._lock:
+            self.misses += 1
         completion: Completion = self.chat.complete(
             self.system.format(genome=agent.genome), self.render(situation, agent))
-        self._witness(completion.served)
-        self.cache[key] = completion.text
-        if self.journal:
-            self.journal.response(key, completion.text, served=completion.served,
-                                  by=agent.id, situation=situation.id)
+        with self._lock:
+            self._witness(completion.served)
+            self.cache[key] = completion.text
+            self.finishes[key] = completion.finish
+            if completion.cut_off:
+                self.truncated += 1
+            if self.journal:
+                self.journal.response(key, completion.text, served=completion.served,
+                                      by=agent.id, situation=situation.id,
+                                      finish=completion.finish)
         return Response(text=completion.text, by=agent.id, situation_id=situation.id,
-                        meta={"served": completion.served})
+                        meta={"served": completion.served, "finish": completion.finish})
+
+    def many(self, pairs: Sequence[tuple[Agent, Situation]]) -> list[Response]:
+        """Answer several independent questions, in the order they were asked.
+
+        The agents within one generation do not talk to each other, so nothing
+        about them is sequential except the network. `workers` is therefore a
+        wall-clock setting and nothing else, and the test that says so is
+        `test_agent.py::test_workers_change_the_wall_clock_and_nothing_else`.
+
+        Distinct KEYS are dispatched, not distinct pairs: two agents holding the
+        same genome asked the same question are one call whether the loop is
+        serial or not, so the cache counts come out the same either way. Without
+        that, concurrency would quietly buy duplicate calls and call them misses.
+        """
+        pairs = list(pairs)
+        if self.workers == 1 or len(pairs) < 2:
+            return [self(agent, situation) for agent, situation in pairs]
+
+        first: dict[str, int] = {}
+        for i, (agent, situation) in enumerate(pairs):
+            first.setdefault(self.key(agent, situation), i)
+
+        answers: dict[int, Response] = {}
+        with ThreadPoolExecutor(max_workers=self.workers) as pool:
+            futures = {pool.submit(self, *pairs[i]): i for i in first.values()}
+            for future in as_completed(futures):
+                answers[futures[future]] = future.result()
+
+        # The rest read what the first of their key just cached, so ordering and
+        # hit counts match the serial path exactly.
+        return [answers[i] if (i := first[self.key(agent, situation)]) == n
+                else self(agent, situation)
+                for n, (agent, situation) in enumerate(pairs)]
 
     def _witness(self, served: str) -> None:
         """Record what answered.

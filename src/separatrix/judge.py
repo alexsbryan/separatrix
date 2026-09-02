@@ -28,7 +28,7 @@ from .trial import Trial
 from .verdict import Ruling, Verdict
 
 __all__ = ["Tier", "LabeledCase", "BiasResult", "Validation", "Judge",
-           "Validated", "BaseJudge"]
+           "Validated", "BaseJudge", "cut_off"]
 
 
 class Tier(Enum):
@@ -47,6 +47,17 @@ class Tier(Enum):
     """A model estimates the fields. Legitimate, and the strongest judge this
     project has ever used is one — but persuadable in principle, so its bias
     probe is the one that actually has to bite."""
+
+
+def cut_off(facts: Mapping[str, Any]) -> bool:
+    """Did the server stop this reply at the token limit?
+
+    One decider, called by both reference judges. A reply three lines into
+    "here is why the text does not say" that is cut before it says so has
+    neither declined nor answered — and scoring it either way is an invented
+    observation, which is the thing four verdicts exist to prevent.
+    """
+    return str(facts.get("finish", "")) == "length"
 
 
 @dataclass(frozen=True)
@@ -145,6 +156,10 @@ class Judge(Protocol):
         """What is known about this judge. `Validation.unmeasured(tier)` is the
         honest answer before anyone has probed it."""
 
+    def attach(self, journal: Any) -> None:
+        """Take the run's journal. A judge that calls something has to record
+        what it asked; a fold has nothing to add and implements this empty."""
+
 
 @dataclass(frozen=True)
 class Validated:
@@ -170,6 +185,11 @@ class Validated:
     def rule(self, trial: Trial) -> Ruling:
         return self.inner.rule(trial)
 
+    def attach(self, journal: Any) -> None:
+        inner = getattr(self.inner, "attach", None)
+        if callable(inner):
+            inner(journal)
+
     def validation(self) -> Validation:
         return self.measured
 
@@ -191,6 +211,15 @@ class BaseJudge:
 
     def validation(self) -> Validation:
         return Validation.unmeasured(self._tier)
+
+    def attach(self, journal: Any) -> None:
+        """Take the run's journal, for judges that have something to record.
+
+        A fold has nothing: its ruling is a function of facts already in the
+        journal, so anyone holding the file can re-derive it. A judge that
+        CALLS something does not have that property, and has to write down what
+        it asked and what came back or its rulings are unauditable.
+        """
 
     def rule(self, trial: Trial) -> Ruling:      # pragma: no cover - abstract
         raise NotImplementedError

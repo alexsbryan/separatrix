@@ -5,13 +5,39 @@
 
 [study]
 name    = "trust-game"
-judge   = "trust_game:judge"
+judge   = "trust_game:reader"
 arena   = "trust_game:arena"
 journal = "trust-game.jsonl"
+cases   = "trust_game:cases"
+
+# Arms are CONFIGS: the same disposition facing two payoff regimes. That only
+# works because the payoffs reach the agent's prompt — until 2026-09-02 they did
+# not, so `temptation` moved the scoring arithmetic and nothing else, and this
+# study was a null control wearing a question's clothes.
+[cases]
+probes = "trust_game:probes"
+draws  = 6    # five situations x six draws; variety comes from the
+              # situations, because this population repeats itself
+out    = "trust-game-cases.jsonl"
+
+[cases.arms.safe]
+genome = "Play to get the best outcome you can."
+config = { temptation = 1.5 }
+
+[cases.arms.tempted]
+genome = "Play to get the best outcome you can."
+config = { temptation = 8.0 }
 
 [endpoint]
 model      = "primary"
-max_tokens = 60
+max_tokens = 900   # 60 truncated EVERY reply and 400 truncated 17 of 24. This
+                   # model reasons at length before a one-word move, and a move
+                   # cut mid-sentence is neither a cooperation nor a defection.
+                   # The prompt is deliberately NOT told to be brief: reading a
+                   # move out of real reasoning text is what this judge is for,
+                   # and it is where a negation ("I choose not to defect") would
+                   # catch it out.
+workers    = 2    # a wall-clock setting; the calls made are identical at any value
 
 [config]
 reward = 3.0

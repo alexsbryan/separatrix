@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Mapping
 
-from ..judge import BaseJudge, Tier
+from ..judge import BaseJudge, Tier, cut_off
 from ..trial import Trial
 from ..verdict import Ruling, Verdict
 
@@ -52,6 +52,11 @@ class FoldJudge(BaseJudge):
         self._observe = observe
 
     def rule(self, trial: Trial) -> Ruling:
+        if cut_off(trial.facts()):
+            return Ruling(verdict=Verdict.COULD_NOT_JUDGE, trial_id=trial.id,
+                          judge=self.id,
+                          note="the reply was cut off at the token limit, so it "
+                               "neither answered nor declined")
         facts = trial.facts()
         try:
             decision = self._decide(facts)

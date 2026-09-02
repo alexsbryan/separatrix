@@ -57,17 +57,49 @@ The lesson is narrower than "your judge might be wrong," since every judge is
 somewhat wrong. The danger is a judge whose errors line up with the thing you are
 varying, because those do not average out over repeated runs — they accumulate
 into a finding. So before spending anything, this scores the judge on labeled
-examples from both ends of the range and refuses if it is worse at one end:
+examples from both ends of the range and refuses if it is worse at one end.
+
+## And then it happened again, here
+
+The experiment above shipped in this repository with a number attached: paying
+for honesty cut invented answers by roughly two thirds, 0.625 down to 0.208.
+
+It did not. Every one of the eighty replies that run recorded to unanswerable
+questions **declined** — checked by hand, and independently by a model reader
+that agreed on all eighty. The true rate was zero everywhere. What moved was the
+wording: the scorer knew `"I don't know"`, which is the phrase the paid-for-honesty
+end produces, and did not know `"it is impossible to determine"` or `"there is no
+mention of"`, which is what the other end says. A monotone gradient in
+vocabulary, published as a monotone gradient in honesty.
+
+It got through because the cases the probe was fed were **written by hand**, and
+they used a decline phrasing the word list happened to know. Every judge shown
+them scored 40/40. So the cases are harvested from the arms now — real replies,
+labeled one by one and committed — and on those, the same word list is refused:
 
 ```
-verdict        FAILED   usable=False
-  arm A   n= 20 errors=  0  rate= 0%
-  arm B   n= 20 errors= 10  rate=50%
+epistemic-garden@1          FOLD       FAILED   usable=False
+  fabricator  n=46  errors=31  rate=67.4%
+  grounder    n=18  errors= 0  rate= 0.0%
+  asymmetry 67.4%   p=3.45e-07
   REFUSED — this judge's blind spot tracks the coordinate you intend to sweep
+
+epistemic-garden-reader@1   ESTIMATED  PASSED   usable=True
+  fabricator  n=46  errors= 0  rate=   0%
+  grounder    n=18  errors= 1  rate=   6%
+  asymmetry    6%   p=0.281
 ```
 
-That judge is right three quarters of the time, which is usually respectable.
-Every mistake it makes falls on one side, so it does not get to run.
+Same rule, same sixty-four replies, two readers. Thirty-one of the word list's
+thirty-one errors are declines it did not recognize, and all of them are on one
+arm. It is not a bad reader of fabrication — it catches all five real ones. It
+is a reader whose vocabulary belongs to one end of the coordinate, which is
+worse, because that error does not average out.
+
+The retraction is in [`FINDINGS.md`](FINDINGS.md), the journal that produced the
+withdrawn numbers is still in the repository and still replays, and
+`pytest tests/test_garden_judges.py` is the refusal as a test — so repairing
+that word list has to be done deliberately rather than quietly.
 
 ## What it does when it cannot answer
 
@@ -130,24 +162,35 @@ outcome can be computed. The narrow thing added here is for once your agents are
 producing sentences, when something has to read them and decide what happened,
 and nothing in that literature helps you show the reader is fair to both sides.
 
-It is early and small: one person, one machine, four included experiments of
-which three have never been run against a model, and one live result that amounts
-to a well-documented shrug. The unrun ones say so and carry no numbers.
+It is early and small: one person, one machine. What it has to show for itself
+is a retraction of its own headline result, found by the mechanism it exists
+for, and the four defects that turned up behind it — a response cache that made
+three replicates into one, a swept coordinate that never reached the agents, a
+second one that never reached the judge, and replies scored as answers after the
+server cut them off mid-sentence. None of those would have failed a test. All of
+them would have produced a number.
+
+All four included experiments now have judges probed against replies their own
+agents produced; two of the four word lists were refused. Three of the four have
+not been swept against a model. They say so, and they carry no numbers.
 
 ## Running it
 
 ```bash
 pip install -e ".[dev]"
-pytest -q                     # 160 tests; the ones needing a model skip themselves
+pytest -q                     # the ones needing a model skip themselves
 
-sep run studies/epistemic_garden.toml --cases epistemic_garden:cases
+sep probe   studies/epistemic_garden.toml   # is the judge fair? spends nothing else
+sep harvest studies/epistemic_garden.toml   # replies from both arms, to label
+sep run     studies/epistemic_garden.toml   # refuses to spend if the probe failed
 ```
 
-The run above is committed, so it can be inspected without a model at all:
+Committed runs can be inspected without a model at all, including the one this
+project retracted:
 
 ```bash
-sep replay  studies/epistemic-garden.jsonl
-sep bracket studies/epistemic-garden.jsonl
+sep replay  studies/epistemic-garden-v1-retracted.jsonl
+sep bracket studies/epistemic-garden-v1-retracted.jsonl
 ```
 
 ## Further reading

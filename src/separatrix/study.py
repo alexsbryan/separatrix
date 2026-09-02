@@ -21,9 +21,10 @@ from typing import Any, Callable, Mapping
 
 from .client import Chat
 from .journal import Journal, Provenance
+from .judge import Judge
 from .sweep import Budget, Coordinate, Outcome
 
-__all__ = ["Study", "load_study", "resolve"]
+__all__ = ["Study", "CaseSource", "load_study", "resolve"]
 
 
 def resolve(ref: str, *, root: Path | None = None) -> Any:
@@ -45,6 +46,24 @@ def resolve(ref: str, *, root: Path | None = None) -> Any:
 
 
 @dataclass(frozen=True)
+class CaseSource:
+    """Where a study's labelled cases come from, before anyone labels them.
+
+    Declared in the TOML like everything else about a study, because "which two
+    dispositions am I probing between" is the same question as "which two ends
+    am I sweeping between" and deserves to be readable in the same file.
+    """
+
+    arms: Mapping[str, Any]                 # arm name -> a genome, a config, or both
+    probes: Any                             # Sequence[Situation], or a callable giving one
+    draws: int
+    path: Path
+
+    def situations(self, config: Mapping[str, Any] | None = None):
+        return self.probes(dict(config or {})) if callable(self.probes) else self.probes
+
+
+@dataclass(frozen=True)
 class Study:
     name: str
     path: Path
@@ -58,6 +77,9 @@ class Study:
     paired: bool
     config: Mapping[str, Any]
     journal_path: Path
+    cases_ref: str | None = None
+    workers: int = 1
+    case_source: "CaseSource | None" = None
 
     def journal(self, served: str, judge: Any = None) -> Journal:
         """Open the run's journal.
@@ -100,6 +122,41 @@ def load_study(path: str | Path) -> Study:
                 temperature=endpoint.get("temperature", 0.8),
                 max_tokens=endpoint.get("max_tokens", 512),
                 timeout=endpoint.get("timeout", 120.0))
+    # A wall-clock setting, and only that: `Responder.many` dispatches distinct
+    # keys, so the calls made and the rulings produced are identical at any
+    # value. It lives on the endpoint because it is a fact about the SERVER's
+    # willingness to answer several at once, not about the study.
+    workers = int(endpoint.get("workers", 1))
+
+    # A judge that reads with a model needs the endpoint, and the endpoint is
+    # data in this file — so `judge` may name a FACTORY taking `chat` instead of
+    # a ready-made judge. The study stays declarative either way, and which one
+    # a module exports is visible from its signature rather than configured.
+    #
+    # A `[judge]` table gives the READER its own endpoint. That is not a saving
+    # dressed as a principle: the instrument does not have to be the same model
+    # as the subject, and whether a cheaper one is fit to read these replies is
+    # a question the probe answers rather than a question of taste. What it must
+    # not be is undeclared, so it lives here, in the file, beside the model that
+    # produced the replies.
+    reading = doc.get("judge", {})
+    judge_chat = Chat(base_url=reading.get("base_url", chat.base_url),
+                      model=reading.get("model", chat.model),
+                      temperature=reading.get("temperature", 0.0),
+                      max_tokens=reading.get("max_tokens", 256),
+                      timeout=reading.get("timeout", chat.timeout))
+    judge = resolve(need("study", "judge"), root=root)
+    if not isinstance(judge, Judge) and callable(judge):
+        judge = judge(chat=judge_chat)
+
+    cases_cfg = doc.get("cases")
+    source = None
+    if cases_cfg:
+        source = CaseSource(
+            arms=dict(cases_cfg["arms"]),
+            probes=resolve(cases_cfg["probes"], root=root),
+            draws=int(cases_cfg.get("draws", 8)),
+            path=root / cases_cfg.get("out", f"{study.get('name', 'study')}-cases.jsonl"))
 
     coordinate = outcome = None
     if sweep_cfg:
@@ -112,7 +169,7 @@ def load_study(path: str | Path) -> Study:
     return Study(
         name=need("study", "name"),
         path=path,
-        judge=resolve(need("study", "judge"), root=root),
+        judge=judge,
         arena_factory=resolve(need("study", "arena"), root=root),
         chat=chat,
         coordinate=coordinate,
@@ -123,4 +180,10 @@ def load_study(path: str | Path) -> Study:
         paired=bool((sweep_cfg or {}).get("paired", True)),
         config=dict(doc.get("config", {})),
         journal_path=root / study.get("journal", f"{study.get('name', 'study')}.jsonl"),
+        # The probe is not an optional extra a caller has to remember on the
+        # command line: a study that declares its labelled cases here cannot be
+        # run without them, and `--cases` is an override rather than the way in.
+        cases_ref=study.get("cases"),
+        case_source=source,
+        workers=workers,
     )

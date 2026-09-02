@@ -10,7 +10,9 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 
+from .cases import harvest
 from .journal import Provenance, Run
 from .study import load_study, resolve
 from .sweep import bracket_from_records, sweep
@@ -103,18 +105,112 @@ def _cmd_bracket(args) -> int:
     return 0 if derived.verdict.is_pass() else 1
 
 
+def _probed(study, override: str | None):
+    """The study's judge, paired with what a probe found out about it.
+
+    One resolution path for both verbs, so `sep probe` cannot report a judge
+    that `sep run` would not use. `--cases` overrides what the study declares;
+    neither is the same as having none, which leaves the judge NEVER_RAN and
+    unusable — the honest state for an instrument nobody has checked.
+    """
+    ref = override or study.cases_ref
+    if ref is None:
+        return study.judge
+    cases = resolve(ref, root=study.path.parent)
+    return probe(study.judge, cases() if callable(cases) else cases)
+
+
+def _render_validation(judge) -> None:
+    v = judge.validation()
+    print(f"judge     {judge.id}  tier={v.tier.value}  {v.verdict}  — {v.note}")
+    if (bias := v.bias) is None:
+        return
+    for arm, row in sorted(bias.arms.items()):
+        print(f"  {arm:<14} n={row['n']:>3}  errors={row['errors']:>3}  "
+              f"rate={row['error_rate']:>5.0%}")
+    if bias.p_value is not None:
+        print(f"  {'asymmetry':<14} {bias.asymmetry:.0%}  "
+              f"p={bias.p_value:.4g}  alpha={bias.alpha:g}")
+    if v.discrimination is not None:
+        print(f"  {'discrimination':<14} {v.discrimination:.3g}")
+
+
+def _cmd_probe(args) -> int:
+    """Ask whether the instrument is fair, and spend nothing else.
+
+    Separate from `run` because the answer is worth having on its own: a reader
+    that is worse at one end of the coordinate is a finding about the reader,
+    and you want it before you have a study's worth of calls invested in it.
+    """
+    study = load_study(args.study)
+    print(f"study     {study.name}   ({study.path.name})")
+    if (args.cases or study.cases_ref) is None:
+        print("this study declares no labelled cases, so there is nothing to "
+              "probe with. Add `cases = \"module:fn\"` under [study], or pass "
+              "--cases module:fn", file=sys.stderr)
+        return 2
+    judge = _probed(study, args.cases)
+    _render_validation(judge)
+    v = judge.validation()
+    if args.json:
+        print(json.dumps(v.as_row(), indent=2))
+    return 0 if v.usable() else 3
+
+
+def _cmd_harvest(args) -> int:
+    """Ask both arms the probes, and write what came back for somebody to label.
+
+    The one step in using this library that cannot be automated is deciding what
+    a reply actually did, and that is correct — it is the ground truth every
+    other number rests on. What CAN be automated is getting the replies, keeping
+    the distinct ones, and putting them somewhere a reviewer can argue with.
+    """
+    study = load_study(args.study)
+    source = study.case_source
+    if source is None:
+        print(f"{study.path.name} declares no [cases] table, so there is nothing "
+              f"to harvest from. It needs `arms`, `probes`, and where to write.",
+              file=sys.stderr)
+        return 2
+
+    out = Path(args.out) if args.out else source.path
+    draws = args.draws or source.draws
+    probes = source.situations(study.config)
+    print(f"study     {study.name}   ({study.path.name})")
+    print(f"harvest   {len(source.arms)} arms x {len(probes)} probes x {draws} draws "
+          f"= {len(source.arms) * len(probes) * draws} calls  -> {out.name}")
+    try:
+        result = harvest(study.chat, arms=source.arms, probes=source.probes,
+                         draws=draws, path=out, config=study.config,
+                         workers=study.workers,
+                         on_probe=lambda arm, probe, n: print(
+                             f"  {arm:<12} x{n}  {probe.prompt.splitlines()[-1][:56]}",
+                             flush=True))
+    except FileExistsError as exc:
+        print(exc, file=sys.stderr)
+        return 2
+
+    print(f"\n{result['distinct']} distinct replies from {result['asked']} calls")
+    if result["truncated"]:
+        print(f"{result['truncated']} dropped: cut off at max_tokens, so they "
+              f"neither answered nor declined")
+    for arm, n in sorted(result["per_arm"].items()):
+        print(f"  {arm:<14} {n}")
+    print(f"\nEvery row needs an `expected` of \"passed\" or \"failed\" before it "
+          f"can probe anything.\nThat judgement is the ground truth and it is "
+          f"yours to make.")
+    return 0
+
+
 def _cmd_run(args) -> int:
     study = load_study(args.study)
     print(f"study     {study.name}   ({study.path.name})")
 
     # The instrument, before the result. A study that cannot probe its judge
     # does not get to spend anything.
-    cases = resolve(args.cases, root=study.path.parent) if args.cases else None
-    judge = probe(study.judge, cases() if callable(cases) else (cases or [])) \
-        if cases is not None else study.judge
-    v = judge.validation()
-    print(f"judge     {judge.id}  tier={v.tier.value}  {v.verdict}  — {v.note}")
-    if not v.usable():
+    judge = _probed(study, args.cases)
+    _render_validation(judge)
+    if not judge.validation().usable():
         print("\nrefusing to spend: probe the judge first "
               "(declare `cases` in the study, or pass --cases module:fn)",
               file=sys.stderr)
@@ -124,8 +220,15 @@ def _cmd_run(args) -> int:
               else study.chat.probe_served())
     print(f"endpoint  {study.chat.base_url}  asked={study.chat.model or '(none)'}  "
           f"served={served}")
+    if (reader := getattr(judge, "chat", None)) is not None and reader.model != study.chat.model:
+        print(f"reader    {reader.base_url}  asked={reader.model}")
 
     with study.journal(served, judge) as journal:
+        # A model judge records what it asked and what came back; a fold has
+        # nothing to add and implements this empty. Guarded because a judge from
+        # outside this library may predate the method.
+        if callable(attach := getattr(judge, "attach", None)):
+            attach(journal)
         arena = study.arena_factory(study=study, journal=journal)
         if study.coordinate is None:
             rulings = arena.run(dict(study.config), judge)
@@ -166,8 +269,22 @@ def main(argv=None) -> int:
 
     run = subs.add_parser("run", help="run a study from a TOML file")
     run.add_argument("study")
-    run.add_argument("--cases", help="module:fn giving labelled cases for the bias probe")
+    run.add_argument("--cases", help="module:fn giving labelled cases for the bias "
+                                     "probe (default: what the study declares)")
     run.set_defaults(fn=_cmd_run)
+
+    hrv = subs.add_parser("harvest", help="collect replies from both arms, to label")
+    hrv.add_argument("study")
+    hrv.add_argument("--out", help="where to write them (default: what [cases] says)")
+    hrv.add_argument("--draws", type=int, help="replies per arm per probe")
+    hrv.set_defaults(fn=_cmd_harvest)
+
+    prb = subs.add_parser("probe", help="probe a study's judge and spend nothing else")
+    prb.add_argument("study")
+    prb.add_argument("--cases", help="module:fn giving labelled cases (default: what "
+                                     "the study declares)")
+    prb.add_argument("--json", action="store_true")
+    prb.set_defaults(fn=_cmd_probe)
 
     args = ap.parse_args(argv)
     return args.fn(args)
