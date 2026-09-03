@@ -551,12 +551,36 @@ before the run it describes; everything it compares against was.
 | A8 noise | pooled spread ≈ 0.027, resolution ≈ 0.031 | measured 0.0139 — quieter than registered |
 | A7 readers | either verdict, published | 27B PASSED (disc 0.85), 4B **REFUSED** (p=0.001) |
 | P4 null control | any verdict except PASSED | **FAILED — no flip in range** (0.250, 0.236) |
-| P3 remaining studies | whatever verdict comes back | judges probed; **sweeps not run** |
+| P3 `commons` | whatever verdict comes back | **FAILED — no flip in [2, 60]**, ends (0, 0.375) |
+| P3 `trust_game` | whatever verdict comes back | **COULD-NOT-JUDGE** — ends 0.208 vs 0.167 inside a 0.0798 noise floor |
+| P3 `telephone` | whatever verdict comes back | **PASSED, width 1** — the whole input range; nothing localised |
+| A9 probe gate | the reader passes before the sweep runs | PASSED, discrimination 0.958, 1 error of 35 |
+| A9 relabel, ungrounded rows | 6-10 flip `failed`→`passed` | **3 — wrong, below the band** |
+| A9 relabel, grounded rows | 2-6 flip `passed`→`failed` | **11 — wrong, above the band** |
+| A9 `telephone` verdict | FAILED, no flip in range | **PASSED — wrong**; the no-institution end is 5.67, not ≤3 |
+| A10 venue | the local daemon, not rented hardware | landed; three sweeps for $0.00 |
+| A11 `commons` | PASSED or COULD-NOT-JUDGE, never FAILED | ends measured at (0.094, 0.458) and they straddle 0.1875, so FAILED is excluded as registered |
+| A11 `trust_game` | PASSED, and narrow | **cancelled by A12** — the rule's precondition fails |
+| A12 restriction | A11 applies only where the ends differ | applied; 2 of 3 studies fail the precondition |
 
 Two of the three registered numeric predictions were wrong in a way the data
 explains, and both are recorded that way rather than quietly dropped. The
 prediction that mattered — that P2 would refuse — was written down before the
 verdict existed.
 
-**Not done:** `commons`, `telephone` and `trust_game` have probed judges and no
-sweeps. Nothing here claims otherwise.
+**The prediction record, which is the point of keeping one.** Across A6, A8, A9
+and A11 this file registered nine numeric or directional predictions before the
+runs that settled them. **Three were right** — that P2 would refuse (§A6), that
+A11's re-picked threshold could not return FAILED, and that the repaired
+telephone reader would pass its probe. **Five were wrong**, three of them in a
+row in §A9, and one of the wrong ones (§A8's noise estimate) was wrong in the
+conservative direction. One is cancelled rather than answered.
+
+Being wrong five times out of nine is not the failure here; not being able to
+say so would have been. Every one of the five is a row above, with the number
+that beat it.
+
+**Not done:** nothing on the shelf is unswept. What remains is named in
+`FINDINGS.md` §Unrun — `telephone` is noise-limited at three replicates, and
+`trust_game`'s reader discriminates at 0.675 and is part of the noise floor that
+stopped its own sweep.
