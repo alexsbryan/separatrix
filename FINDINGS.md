@@ -424,6 +424,25 @@ never a claim about anything, exactly as `§A8` says of the garden's. A
 the same verdict against a line somebody argued for, and the honest reading is
 "not in [2, 60] against a half-of-runs bar", not "regeneration does not matter".
 
+**Re-run against a threshold that was not a placeholder** — 0.1875, the midpoint
+of the two ends the pilot measured, computed from the journal by the rule in
+`§A11` rather than chosen. The ends came back at 0.094 and 0.458 and they
+straddle it, so a flip exists, as `§A11` registered it must:
+
+```
+COULD-NOT-JUDGE  regeneration
+  the ends straddle 0.1875, so a flip is somewhere in [2, 60] — but the
+  search stopped before narrowing that at all, so this locates nothing.
+  stopped at the noise floor: sustainable share 0.146 at 31 is within
+  0.0577 of the threshold
+```
+
+So: there is a crossing between a regeneration rate of 2 and one of 60, and
+three replicates cannot say where. **This verdict was `PASSED, width 58` until
+the defect in §10 was fixed** — an hour, in this repository's history, during
+which a bracket identical to its own input range was reported as a resolved
+boundary.
+
 ## 8. The institution works, and it costs about three quarters of what it buys
 
 `telephone` swept `reputation_threshold` over `[0, 1]` on `Qwen3.6-35B-A3B`,
@@ -434,17 +453,18 @@ refusing. The reader was probed on re-labelled cases first: PASSED,
 discrimination 0.958, 1 error in 35, no arm asymmetry (p = 0.31).
 
 ```
-PASSED  reputation_threshold flips in [0, 1]  (width 1)
-  noise 1.247 at threshold 3; 9 runs
-  stopped at the noise floor
+COULD-NOT-JUDGE  reputation_threshold
+  the ends straddle 3, so a flip is somewhere in [0, 1] — but the search
+  stopped before narrowing that at all, so this locates nothing.
+  stopped at the noise floor: false-claim reach 2.67 at 0.5 is within 1.44
+  of the threshold (per-sample noise 1.25 over 3 replicates)
 ```
 
-**Read that PASSED with its width beside it.** The bracket is the entire input
-range: the ends straddle the threshold, so a flip does exist in there, and
-nothing whatever was localised. Beside the garden's PASSED at width 0.0625 —
-sixty-four times narrower than ITS range — this one has not earned the same
-word. `§A12` records that as a defect in the verdict logic rather than dressing
-it up here.
+**This run reported `PASSED  flips in [0, 1]  (width 1)` when it was made.** The
+bracket was the entire input range and it carried the same word as the garden's
+bracket at sixty-four times narrower than ITS range. `§A12` flagged it as
+suspected, `§A13` registered the fix, and §10 below is what it turned out to
+be. The boundary is not located. What follows does not depend on it.
 
 **The result is not in the bracket. It is in what the sweep journalled on the
 way.** Mean reach per claim, three replicates at each end:
@@ -510,6 +530,59 @@ shelf: PASSED, but discrimination 0.675 with errors of 25% and 14% across the
 two arms, at a minimum detectable asymmetry of 25%. Some of the 0.0798 is the
 judge. A tighter reader is the other way to close this gap, and the probe is
 what says so.
+
+## 10. It called an unnarrowed bracket a pass, and had done since its first live run
+
+`Search._finish` takes `verdict=Verdict.PASSED` as its default. The noise-floor
+branch calls it without one, and that branch can fire on the **first** bisection
+step: the midpoint lands within the resolution of the threshold, so neither
+`self.lo` nor `self.hi` is ever assigned, and the bracket handed back is the
+range handed in.
+
+Both halves of that are true and only one was being said. The ends do straddle
+the threshold, so a flip is genuinely in there somewhere. And nothing whatever
+has been localised — which, reported as `PASSED`, wears the same word as a
+bracket sixty-four times narrower than its own range.
+
+`§A12` recorded it as suspected on one run. `commons` produced it again within
+the hour, at which point it was half the shelf, and `§A13` registered the change
+before it was made: a `PASSED` still spanning the full coordinate range is
+`COULD_NOT_JUDGE`, with a note saying both true things.
+
+**Every journal in the repository was re-derived, not only the two this was
+written for.** `sep bracket` replays without a model, so a selective check would
+have had no excuse:
+
+| journal | before | after |
+|---|---|---|
+| `epistemic-garden-4b` — the resolved boundary | PASSED, width 0.0625 | **unchanged** |
+| `epistemic-garden-v2` — 35B, no flip | FAILED | unchanged |
+| `epistemic-garden-4b-null` — the null control | FAILED | unchanged |
+| `trust-game` | COULD-NOT-JUDGE | unchanged |
+| `telephone` | PASSED, width 1 of [0, 1] | **COULD-NOT-JUDGE** |
+| `commons` | PASSED, width 58 of [2, 60] | **COULD-NOT-JUDGE** |
+| `epistemic-garden-v1-retracted` | PASSED, width 4 of [0, 4] | **COULD-NOT-JUDGE** |
+
+The last row was not predicted, and it is the one worth sitting with. **The first
+live result this project ever produced had an unnarrowed bracket too.** That run
+is already retracted — `§1`, for a judge that measured decline vocabulary — and
+underneath that retraction there was a second thing wrong with it that nobody
+noticed for a month, because the verdict line said the word you want to see. The
+commit that published it described the result in prose as a refusal, correctly.
+The tool disagreed with its own author and the tool was the one being quoted.
+
+`tests/test_sweep.py::test_a_bracket_that_never_narrowed_is_not_a_pass` is the
+gate, and it was watched failing before it passed. Its counterpart —
+`test_the_noise_floor_stops_the_bisection_and_says_so` — still passes unchanged,
+because a search that narrows even one step before stopping has halved the range
+and that is real information. The line is between narrowing something and
+narrowing nothing.
+
+**What it costs.** The shelf now stands at one PASSED, two FAILED and three
+COULD-NOT-JUDGE. Two results that were in this file an hour ago are no longer
+results. That is a worse-looking shelf and a truer one, and it is the second
+time in this project's short history that the instrument was the thing wrong
+rather than the world.
 
 ## Unrun
 

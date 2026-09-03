@@ -322,6 +322,25 @@ class Search:
     # ── the answer ──────────────────────────────────────────────────────────
 
     def _finish(self, note: str, verdict: Verdict = Verdict.PASSED) -> None:
+        # A PASSED that never narrowed the range is not a resolved boundary.
+        # The noise-floor branch calls this without a verdict, and it can fire
+        # on the FIRST bisection step — the midpoint lands within the
+        # resolution of the threshold, so neither `lo` nor `hi` is ever
+        # assigned and the bracket handed back is the one handed in. Both
+        # halves of that are true and only one of them was being said: the ends
+        # do straddle, so a flip IS in there somewhere, and nothing whatever
+        # has been localised. Reported as PASSED it wore the same word as a
+        # bracket sixty-four times narrower than its own range.
+        #
+        # It was not a corner case. It is what this repo's first live result
+        # did, and two of the four studies on the shelf besides.
+        # PREREGISTRATION.md A13.
+        if verdict is Verdict.PASSED and self.lo <= self.coord.lo and self.hi >= self.coord.hi:
+            verdict = Verdict.COULD_NOT_JUDGE
+            note = (f"the ends straddle {self.outcome.threshold:g}, so a flip is "
+                    f"somewhere in [{self.coord.lo:g}, {self.coord.hi:g}] — but the "
+                    f"search stopped before narrowing that at all, so this locates "
+                    f"nothing. {note}")
         keep_span = verdict is not Verdict.PASSED
         self._done = Bracket(
             verdict=verdict, coordinate=self.coord.name,

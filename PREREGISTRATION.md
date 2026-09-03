@@ -619,19 +619,30 @@ before the run it describes; everything it compares against was.
 | A11 `commons` | PASSED or COULD-NOT-JUDGE, never FAILED | ends measured at (0.094, 0.458) and they straddle 0.1875, so FAILED is excluded as registered |
 | A11 `trust_game` | PASSED, and narrow | **cancelled by A12** — the rule's precondition fails |
 | A12 restriction | A11 applies only where the ends differ | applied; 2 of 3 studies fail the precondition |
+| A13 `telephone`, `commons` | PASSED → COULD-NOT-JUDGE | both changed, as registered |
+| A13 the garden's resolved bracket | must NOT change, or the rule is reverted | **unchanged** — width 0.0625 of a range of 4 |
+| A13 FAILED runs and `trust_game` | no path from those verdicts exists | unchanged |
+| A13 the test suite | nothing fails except by asserting the old behaviour | nothing failed; 219 pass |
+| A13 — **not predicted** | — | `epistemic-garden-v1-retracted` PASSED → COULD-NOT-JUDGE. The first live result had an unnarrowed bracket too |
 
 Two of the three registered numeric predictions were wrong in a way the data
 explains, and both are recorded that way rather than quietly dropped. The
 prediction that mattered — that P2 would refuse — was written down before the
 verdict existed.
 
-**The prediction record, which is the point of keeping one.** Across A6, A8, A9
-and A11 this file registered nine numeric or directional predictions before the
-runs that settled them. **Three were right** — that P2 would refuse (§A6), that
+**The prediction record, which is the point of keeping one.** Across A6, A8, A9,
+A11 and A13 this file registered thirteen numeric or directional predictions
+before the runs that settled them. **Seven were right** — all four of A13's,
+including the one that mattered most there (that the garden's resolved bracket
+must not move, since the rule would otherwise have been reverted rather than the
+result) — and three earlier ones — that P2 would refuse (§A6), that
 A11's re-picked threshold could not return FAILED, and that the repaired
 telephone reader would pass its probe. **Five were wrong**, three of them in a
 row in §A9, and one of the wrong ones (§A8's noise estimate) was wrong in the
-conservative direction. One is cancelled rather than answered.
+conservative direction. One is cancelled rather than answered. **And one change
+was not predicted at all** — the retracted first result losing its PASSED — which
+is the entry that justifies re-deriving every journal instead of the two an
+amendment was written for.
 
 Being wrong five times out of nine is not the failure here; not being able to
 say so would have been. Every one of the five is a row above, with the number

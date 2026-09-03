@@ -38,6 +38,10 @@ lo          = 2.0
 hi          = 60.0
 outcome     = "commons:sustainable_rate"
 name        = "sustainable share"
-threshold   = 0.5
+# PREREGISTRATION.md A11: the midpoint of the two ends this study's own
+# pilot measured (0.0000 and 0.3750), computed from the journal rather than
+# chosen. The value it replaced was a default nobody argued for, and the
+# pilot's verdict against that default stands in the same journal.
+threshold   = 0.187500
 replicates  = 3
 budget_runs = 24

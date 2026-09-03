@@ -150,6 +150,28 @@ def test_the_noise_floor_stops_the_bisection_and_says_so():
     assert b.lo <= 0.37 <= b.hi       # and the bracket still holds the true crossing
 
 
+def test_a_bracket_that_never_narrowed_is_not_a_pass():
+    """The counterpart to the test above, and the one that was missing.
+
+    The noise floor can fire on the FIRST bisection step — here the ramp crosses
+    exactly at the midpoint of the range — and then neither end is ever assigned,
+    so the bracket handed back is the range handed in. Both halves are true and
+    only one was being said: the ends do straddle, so a flip IS in there, and
+    nothing whatever has been localised. Reported as PASSED it wore the same word
+    as a bracket sixty-four times narrower than its own range.
+
+    Not a corner case. It is what this repo's first live result did, unnoticed
+    underneath a retraction about something else, and what two of the four
+    studies on the shelf did afterwards. `PREREGISTRATION.md` A13.
+    """
+    arena = RampArena(crossing=0.5, jitter=0.15, seed=11)   # crosses at the midpoint
+    b = sweep(arena, _judge(), COORD, Y, budget=Budget(runs=400), replicates=4)
+    assert b.verdict is Verdict.COULD_NOT_JUDGE, b.note
+    assert (b.lo, b.hi) == (COORD.lo, COORD.hi)      # nothing was narrowed
+    assert "locates nothing" in b.note
+    assert "noise floor" in b.note                   # and it still says why it stopped
+
+
 def test_a_sharp_step_is_right_to_bisect_to_budget():
     """The counterpart. A genuinely sharp boundary can be narrowed as far as the
     budget allows, because no midpoint ever sits ambiguously near the threshold."""
