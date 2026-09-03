@@ -384,9 +384,16 @@ class Search:
 
     def result(self) -> Bracket:
         if self._done is None:
-            self._finish(f"budget exhausted after {self.spent} runs; the bracket is as "
-                         f"narrow as {self.max_runs} runs at {self.replicates} "
-                         f"replicates allows")
+            # A REPLAY has no budget — it has however many samples the journal
+            # holds — and saying "as narrow as None runs allows" prints an
+            # absence as if it were a count, which is the one thing this library
+            # is not allowed to do.
+            self._finish(
+                f"budget exhausted after {self.spent} runs; the bracket is as narrow "
+                f"as {self.max_runs} runs at {self.replicates} replicates allows"
+                if self.max_runs is not None else
+                f"the journal holds no further samples; the bracket is as narrow as "
+                f"its {self.spent} recorded runs at {self.replicates} replicates allow")
         return self._done
 
 

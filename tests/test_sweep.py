@@ -381,3 +381,23 @@ def test_a_zero_noise_floor_cannot_stop_the_search():
     assert b.noise == 0.0
     assert b.width < COORD.span / 8       # it narrowed, rather than giving up
     assert b.lo <= 0.5 <= b.hi
+
+
+def test_a_replay_does_not_report_a_budget_it_never_had():
+    """`bracket_from_records` builds a Search with no `max_runs` — a replay has
+    however many samples the journal holds. The budget-exhausted note printed
+    that None straight into the sentence: "as narrow as None runs allows", an
+    absence rendered as a count, in the output a reader sees first.
+    """
+    from separatrix.sweep import bracket_from_records
+    b = sweep(StepArena(flip=0.37), _judge(), COORD, Y,
+              budget=Budget(runs=60), replicates=3, journal=None)
+    recs = [{"t": "forecast"}] + [
+        {"t": "sample", "coordinate": "x", "value": v, "outcome": y}
+        for v, y in ((0.0, 0.2), (0.0, 0.2), (0.0, 0.2),
+                     (1.0, 0.9), (1.0, 0.9), (1.0, 0.9))]
+    replayed = bracket_from_records(recs, threshold=0.5, name="y")
+    assert "None" not in replayed.note
+    assert "journal holds no further samples" in replayed.note
+    assert "budget exhausted" not in replayed.note
+    assert "budget exhausted" in b.note        # the live path still says budget
