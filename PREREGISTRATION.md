@@ -473,6 +473,64 @@ budgeted 24 and returned a definite "not here" in four minutes. A sweep that
 refuses cheaply and resolves expensively is the behaviour worth having, and it
 was not designed in — it falls out of measuring the ends before bisecting.
 
+## A12 — A11's rule has a precondition, and two of the three studies fail it (2026-09-02)
+
+The pilots ran, and they say A11 cannot be applied to two of the three studies
+it was written for. Recorded here rather than applied quietly, because an
+amendment that turns out to be inapplicable is a result and not an
+embarrassment.
+
+**A11's rule presumes the two ends DIFFER.** It takes their midpoint, and a
+midpoint is only a bar when the numbers it sits between are distinguishable
+from each other. Where they are not, the rule manufactures a threshold out of
+noise and then finds a "boundary" at it — which is the failure the whole
+amendment was supposed to be guarded against, arriving through the guard.
+
+| study | pilot verdict | ends | A11 applies? |
+|---|---|---|---|
+| `commons` | FAILED, no flip | 0.0000 vs 0.3750 | **yes** — the ends differ, threshold 0.1875 |
+| `trust_game` | COULD-NOT-JUDGE | 0.208 vs 0.167, gap 0.041, per-sample noise 0.0798 | **no** — indistinguishable |
+| `telephone` | PASSED, width 1 | 5.67 vs 1.67 | **no** — see below |
+
+**`trust_game` is noise-limited, not threshold-limited.** Its two ends are the
+same number as far as this many replicates can tell, and the sweep said so in
+its own words rather than returning a bracket. There is no honest midpoint
+between two values that are not different. **Its A11 re-run is cancelled**, and
+the COULD-NOT-JUDGE stands as its result.
+
+**`telephone` does not need a new threshold either, for the opposite reason.**
+Its ends are far apart (false-claim reach 5.67 at no institution, 1.67 at full)
+and they already straddle the threshold of 3.0 — the pilot returned PASSED. What
+stopped it was noise at the first bisection step, not the position of the bar.
+Re-picking the bar to the midpoint of ends that already straddle it changes
+nothing about that, so the rule would buy a different number and no more
+knowledge. Its fix is replicates, exactly as `§P2`'s was.
+
+**A9's third prediction was WRONG.** It registered `telephone` returning
+`FAILED — no flip in range`, on the reasoning that the repaired `false_reach`
+would put the no-institution end at or below 3.0. The no-institution end came
+back at 5.67, nearly twice the threshold. The repair removed refusals from the
+count and there was still plenty of reach left, because the vivid personas do
+spread the rumour and there are four of them.
+
+**A suspected reporting weakness, named on the run that exposed it.**
+`telephone` returned:
+
+```
+PASSED  reputation_threshold flips in [0, 1]  (width 1)
+  stopped at the noise floor
+```
+
+The bracket is the entire input range. Nothing was localised, and calling that
+PASSED sits badly beside the garden's PASSED at width 0.0625 — sixty-four times
+narrower than ITS input range. The verdict is not wrong on its own terms: the
+ends do straddle, so a flip does exist in there. But **a bracket that has not
+been narrowed at all is a pass nobody earned**, and the four-verdict scheme
+already owns the right word for it. This is recorded as a defect to fix in the
+sweep's verdict logic, NOT fixed in this run, and `FINDINGS.md` reports the
+telephone result with the width beside it either way.
+
+
 
 
 ---
