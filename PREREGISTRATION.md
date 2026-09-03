@@ -661,6 +661,109 @@ to reconstruct.
 
 
 
+## A15 — what three runs at power actually bought, and the two defects they exposed (2026-09-03)
+
+`§A14`'s three runs finished at 00:11, in 52 minutes rather than the three hours
+forecast. **Three of its four registered predictions were wrong.** The rows are
+in `What landed`; this section is the part that changes what the instrument does
+next, and it is written after seeing the results, which is said here rather than
+implied.
+
+**The finding that reframes A14: power cannot buy a bracket out of this stopping
+rule.** A14 assumed the refusals were noise-limited and that replicates would
+lift them. Half of that is true — nine replicates cut the resolution from 0.0577
+to 0.0404 exactly as arithmetic said — and the conclusion does not follow, for a
+reason that is structural rather than empirical:
+
+> The search stops when the probed midpoint lands within `resolution` of the
+> threshold. Resolution falls as `1/sqrt(n)`. But bisection **walks toward the
+> crossing**, and at the crossing the gap is zero by construction. The quantity
+> the rule compares against shrinks faster than the rule's own floor.
+
+R2 is the worked example. Its midpoint at `regeneration = 31` measured 0.1632
+against a bar of 0.1875 — a gap of 0.0243 inside a resolution of 0.0404. Getting
+past *that one step* needs `2 x 0.0606 / sqrt(n) < 0.0243`, so **n >= 25**, and the
+step after it lands nearer the crossing and demands more again. **The replicates
+required grow without bound as the search converges.** This is not a property of
+`commons`; it is a property of "stop when the probe is within resolution of the
+threshold" applied to a bisection, and it means every study on this shelf has a
+refusal that no affordable power setting will lift.
+
+Registered as a consequence, not yet acted on: **the noise-floor stop is a
+property of the rule, so a study that wants a bracket needs a different search**
+— sampling away from the crossing, or a rule that spends its remaining budget on
+the tightest step it can still resolve rather than halting at the first one it
+cannot. Neither is designed here, and neither is attempted unattended.
+
+**Defect 1 — the banner names the model the run started on, and A14's runs
+changed model mid-flight.** `Run.served` reads the header's provenance, written
+from a single probe before the first call. R1 printed
+`served=Qwen3.6-35B-A3B-MTP-UD-Q6_K` while **30 of its 1152 calls were answered
+by `primary @ peer Alexs-MacBook-Pro-2`**, alternating back and forth thirty
+times; R2 had 5 of 1728. The `model_changed` record fired **once**, on the first
+switch, and never again.
+
+Worse, the string recorded for those calls is **an alias**. `Provenance` refuses
+to record `served="primary"` at all — that guard is this repo's oldest test,
+written because the sandbox recorded an alias everywhere and which model produced
+its published tables is now unrecoverable by anyone. The response path had no
+such guard, so the alias got in anyway, and **which model answered those 30 calls
+cannot be recovered.**
+
+*The change, shipped with this section:* `Run.served_counts()` counts what
+actually answered, from the calls rather than from the header; `served_is_mixed()`
+says whether the banner is the whole story; `sep replay` prints the mixture and
+warns on stderr. It changes no verdict — it changes what a run is willing to
+claim about itself.
+
+*Does it contaminate A14?* **No, and the data says so rather than the author.**
+R1 carried 2.6% peer calls and R2 carried 0.3%. If the peer moved the numbers the
+two would disagree; their endpoint means agree to **0.3 standard errors at both
+ends** (x=2: 0.0556 vs 0.0451; x=60: 0.3264 vs 0.3368). The peer is ruled out as
+the cause of the endpoint shift by an internal control that happened to exist.
+
+**Defect 2 — `PREREGISTRATION.md` cites `commons` endpoints its own journal does
+not support.** `§A11` records ends of "(0.094, 0.458)" and `§A14` reasons from
+"0.09 and 0.46". The journal for that run records **(0.0208, 0.3958)**. The
+quoted pair is the mean of a *discarded* block: that run restarted its search
+three times inside one run id, and both the live search and `bracket_from_records`
+correctly use the last block. The numbers were read off an abandoned attempt.
+A14's prediction 1 was right about the verdict and was reasoning from figures
+that were never that run's ends.
+
+**Defect 3 — `telephone` measures "reach" twice, and the two disagree.** The
+sweep outcome `false_reach` counts *distinct tellers who ever passed the claim
+on* (max 6); the `reach` journal record carries *per-round reach* (max 5), and
+`FINDINGS.md` §8's table is built from the second. At `reputation_threshold = 0`
+they report **6.0 and 5.0 for the same world**. One name, two deciders. Recorded
+here; not repaired in this commit, because repairing it moves a published number
+and that is a decision to take deliberately.
+
+**The A13 rule has a floor one step too low, and R3 landed on it.** A13 downgrades
+a PASSED whose bracket is still the *entire* range. R3 returned
+`PASSED [0.5, 1]` — width 0.5 of a range of 1, **one bisection step**, stopped at
+the noise floor like R2 was. R2 and R3 halted for the identical reason and wear
+different verdicts because the floor caught one of them a single step later.
+
+*Registered, NOT applied:* the bar belongs in the study file, not in the library
+as a constant somebody chose after seeing a result they disliked. A
+`[sweep] resolve_to` key — the fraction of its range a bracket must reach to
+count as located — makes it a declared, per-study choice registered before a run,
+which is what `§A8` and `§A11` did for thresholds. **This is not applied in this
+commit.** It would move `telephone`'s only PASSED to COULD-NOT-JUDGE and leave
+the shelf with one PASSED across five studies, and a rule change that reshapes
+every verdict on the shelf is not an unattended call — that is `§A14`'s own
+standing rule, and it binds hardest when the change flatters nobody.
+
+**Predictions, for whenever it is applied.**
+
+1. `telephone` R3 `PASSED` → `COULD-NOT-JUDGE` at any `resolve_to` below 0.5.
+2. The garden's `[0, 0.0625]` on a range of 4 — 1.6% — survives any
+   `resolve_to` down to 0.02. If it does not, the rule is wrong rather than the
+   result, and the rule is what gets reverted.
+3. No `FAILED` or existing `COULD-NOT-JUDGE` changes: no path from those exists.
+
+
 ---
 
 # What landed
@@ -695,11 +798,28 @@ before the run it describes; everything it compares against was.
 | A13 FAILED runs and `trust_game` | no path from those verdicts exists | unchanged |
 | A13 the test suite | nothing fails except by asserting the old behaviour | nothing failed; 219 pass |
 | A13 — **not predicted** | — | `epistemic-garden-v1-retracted` PASSED → COULD-NOT-JUDGE. The first live result had an unnarrowed bracket too |
+| A14 R1 `commons` @ 0.5, 9 reps | FAILED, no flip in range | **FAILED** — ends (0.0556, 0.326), both far below 0.5. Right verdict; the registered ends "0.09 and 0.46" were never that run's (§A15 defect 2) |
+| A14 R2 `commons` @ 0.1875, 9 reps | PASSED, bracket narrower than 15 | **COULD-NOT-JUDGE — wrong.** Bracket never narrowed at all. Measured noise 0.0606 → resolution 0.0404, not the registered 0.0333; the midpoint at 31 sat 0.0243 from the bar |
+| A14 R3 `telephone` @ 16 rounds | still COULD-NOT-JUDGE; a PASSED registered as not expected | **PASSED [0.5, 1] — wrong**, and thin: half the range, one bisection step, stopped at the same noise floor as R2 (§A15) |
+| A14 R3 cost ratio | between 0.6 and 0.9 | **0.984 at 0.5, 0.960 at 0.75 and 1.0 — wrong, above the band.** The norm is not "barely selective" at sixteen rounds; it is not selective (`FINDINGS.md` §8) |
+| A14 `trust_game` | deliberately not re-run | not re-run; its COULD-NOT-JUDGE stands |
+| A14 "sixteen rounds is a different world" | registered as a caution, ratios never pooled | **the caution was right** — reach falls from 5.00 to 0.78/0.60, a near-total quarantine, not a finer-grained version of the four-round world |
+| A15 — **not predicted** | — | two of A14's runs changed model mid-flight, 30 calls and 5 calls to a peer, recorded under an **alias**; ruled out as the cause by the R1/R2 internal control |
+| A15 the test suite | nothing fails except by asserting old behaviour | nothing failed; 221 pass, 5 skipped |
 
 Two of the three registered numeric predictions were wrong in a way the data
 explains, and both are recorded that way rather than quietly dropped. The
 prediction that mattered — that P2 would refuse — was written down before the
 verdict existed.
+
+**A14 went three-for-four wrong**, and the one it got right it got right from
+figures that were not the run's own. That is the worst single amendment on this
+record, and it is worth being exact about why, because "we were underpowered" was
+the diagnosis and it was only half right. Nine replicates delivered precisely the
+resolution the arithmetic promised. The bracket did not arrive anyway, because
+the stopping rule is measured against a gap the search itself drives to zero
+(§A15). **An amendment can buy exactly what it registered and still buy nothing**,
+and no number of replicates is the fix for that.
 
 **The prediction record, which is the point of keeping one.** Across A6, A8, A9,
 A11 and A13 this file registered thirteen numeric or directional predictions

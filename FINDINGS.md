@@ -494,6 +494,53 @@ Worth being explicit about what the repair did and did not change: it stopped
 the norm from punishing refusal, and the norm is still only 0.74-selective.
 The defect was real and fixing it did not rescue the institution.
 
+### The same study at sixteen rounds says something stronger, and worse
+
+`§A14` re-ran `telephone` with `rounds` raised from four to sixteen, on the
+argument that reach is a small integer over six agents and rounds — not
+replicates — is what makes the outcome finer-grained. **Sixteen rounds is a
+different world and the two are never pooled**, which was registered before the
+run and turned out to be the important sentence in it.
+
+| `reputation_threshold` | true claim | false claim | suppressed | honest reach lost | cost ratio |
+|---|---|---|---|---|---|
+| 0.0 — no institution | 5.000 | 5.000 | — | — | — |
+| 0.5 | 1.156 | 1.094 | 3.906 | 3.844 | **0.984** |
+| 0.75 | 0.781 | 0.604 | 4.396 | 4.219 | **0.960** |
+| 1.0 | 0.781 | 0.604 | 4.396 | 4.219 | **0.960** |
+
+Six replicates at each value. The error bars are the thing the run was for and
+they arrived: the per-value spread falls from sd 0.38-0.95 at four rounds to sd
+0.12-0.28 at sixteen.
+
+**The cost ratio is 0.96-0.98, and `§A14` registered it would stay between 0.6
+and 0.9.** That prediction was wrong, and wrong in the direction that matters.
+At four rounds this norm looked *barely* selective — three quarters of a unit of
+honest reach per unit of rumour suppressed. At sixteen, when the institution has
+had time to settle, **it is not selective at all.** It suppresses the true claim
+and the false one at within four percent of the same rate, and with these spreads
+that difference is not distinguishable from zero (t = 1.77 on 6 replicates).
+
+The four-round table let §8 above say "closer to a blunt censor that happens to
+catch more rumour than fact." **At sixteen rounds the qualifier is gone.** Reach
+falls from 5.00 to 0.78 for the true claim and 0.60 for the false one: the
+settled institution does not separate them, it silences nearly everyone. The
+answer to *does an institution suppress fabrication without suppressing fact?*
+is no at four rounds and emphatically no at sixteen.
+
+Two cautions, both of which are the reader's to weigh:
+
+- **`0.75` and `1.0` are byte-identical, draw for draw** — `[1, 4, 2, 2, 1, 4]`
+  at both. That is not a bug. Draws are paired (common random numbers across
+  coordinate values, `sweep.draw_label`), and the parameter **saturates**: above
+  0.75 no additional teller is ever quarantined, so the trajectories coincide.
+  The consequence is real though — **the top quarter of this study's declared
+  range is a dead zone**, and the sweep spent its stopping decision inside it.
+- **The bracket this run returned, `PASSED [0.5, 1]`, is half the input range**
+  — one bisection step, halted at the same noise floor that returned
+  COULD-NOT-JUDGE for `commons` (`§A15`). It clears `§A13`'s guard by exactly one
+  step. As with the four-round run, **the result here is not in the bracket.**
+
 ## 9. Two ends that are the same number, and the verdict that says so
 
 `trust_game` swept `temptation` over `[1, 8]` at a reward of 3, punishment 1,

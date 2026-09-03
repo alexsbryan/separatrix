@@ -42,6 +42,6 @@ name        = "sustainable share"
 # pilot measured (0.0000 and 0.3750), computed from the journal rather than
 # chosen. The value it replaced was a default nobody argued for, and the
 # pilot's verdict against that default stands in the same journal.
-threshold   = 0.187500
-replicates  = 3
-budget_runs = 24
+threshold = 0.1875
+replicates = 9
+budget_runs = 90

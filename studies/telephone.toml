@@ -51,7 +51,7 @@ max_tokens  = 400
 # is its average across rounds, so rounds is what makes it finer-grained.
 # Replicates only average an already-coarse number. PREREGISTRATION.md A14.
 [config]
-rounds = 4
+rounds = 16
 
 [sweep]
 # How much standing a teller must keep to be believed. 0 quarantines nobody,
@@ -62,5 +62,5 @@ hi          = 1.0
 outcome     = "telephone:false_reach"
 name        = "false-claim reach"
 threshold   = 3.0
-replicates  = 3
-budget_runs = 24
+replicates = 6
+budget_runs = 48

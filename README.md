@@ -202,6 +202,17 @@ suppression. Fixing that is in [`PREREGISTRATION.md`](PREREGISTRATION.md) §A9,
 it was registered before it was made, and the norm is still only 0.74-selective
 afterwards.
 
+**Then the same study was re-run at sixteen rounds instead of four, and the
+qualifier disappeared.** A settled institution is the case worth asking about,
+and there the cost ratio is **0.96-0.98**: true and false claims suppressed at
+within four percent of the same rate, a difference these spreads cannot separate
+from zero. Reach falls from 5.00 to 0.78 and 0.60. It does not sort claims; it
+silences almost everyone. [`PREREGISTRATION.md`](PREREGISTRATION.md) §A14
+registered that this ratio would stay between 0.6 and 0.9 — **that prediction was
+wrong**, and it is one of three of four wrong in that amendment. The four-round
+and sixteen-round numbers are different worlds and are never pooled, which §A14
+also said before the run.
+
 The sweep itself returned `COULD-NOT-JUDGE` on this one: the ends straddle the
 threshold, so the crossing is in there, and three replicates could not say
 where. **The table above is not the bracket** — it is what the run journalled on
