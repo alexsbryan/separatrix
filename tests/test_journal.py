@@ -250,3 +250,34 @@ def test_two_sweeps_that_ask_different_questions_are_different_runs(tmp_path):
     assert first != second, "a different threshold is a different experiment"
     assert first == again, "the same question resumes the same run"
     assert Run.runs(path) == [first, second], "one header apiece, and only two"
+
+
+# ── the banner names the first model; the calls name every one ───────────────
+
+def test_a_run_rerouted_mid_flight_reports_the_mixture_not_the_first_model(tmp_path):
+    """`served` is probed once, before the first call, and a mesh can reroute
+    afterwards. A14's R1 printed one model in its banner while 30 of its 1152
+    calls were answered by a peer — the run's numbers are a mixture and the
+    banner said they were not. PREREGISTRATION.md A15.
+    """
+    path = tmp_path / "mixed.jsonl"
+    with Journal(path, provenance=_prov()) as j:
+        j.response("k1", "6", served="Qwen3.6-35B-A3B-MTP-UD-Q6_K")
+        j.response("k2", "7", served="Qwen3.6-35B-A3B-MTP-UD-Q6_K")
+        j.response("k3", "8", served="some-other-model")
+    run = Run.load(path)
+    assert run.served == "Qwen3.6-35B-A3B-MTP-UD-Q6_K"      # still true, still not enough
+    assert run.served_counts() == {"Qwen3.6-35B-A3B-MTP-UD-Q6_K": 2, "some-other-model": 1}
+    assert run.served_is_mixed()
+    assert run.summary()["served_mixed"]
+
+
+def test_a_run_served_end_to_end_by_one_model_is_not_flagged(tmp_path):
+    """The guard has to be silent on the ordinary case or nobody reads it."""
+    path = tmp_path / "clean.jsonl"
+    with Journal(path, provenance=_prov()) as j:
+        j.response("k1", "6", served="Qwen3.6-35B-A3B-MTP-UD-Q6_K")
+        j.response("k2", "7", served="Qwen3.6-35B-A3B-MTP-UD-Q6_K")
+    run = Run.load(path)
+    assert not run.served_is_mixed()
+    assert run.served_counts() == {"Qwen3.6-35B-A3B-MTP-UD-Q6_K": 2}

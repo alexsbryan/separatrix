@@ -227,6 +227,29 @@ class Run:
     def bracket(self) -> dict | None:
         return next((r for r in reversed(self.other) if r.get("t") == "bracket"), None)
 
+    def served_counts(self) -> dict[str, int]:
+        """Every model that actually answered this run, and how many times.
+
+        `served` names the model the run STARTED on: one probe, before the first
+        call, recorded in the header and never revisited. A mesh that reroutes
+        mid-run leaves that line true and the numbers mixed. It is not
+        hypothetical — `PREREGISTRATION.md` A15: R1 of A14 printed a single
+        model in its banner while 30 of its 1152 calls were answered by a peer,
+        alternating back and forth thirty times, and the one `model_changed`
+        record fired on the first switch only.
+
+        What served a call is a property of the call, so it is counted from the
+        calls. A run whose banner names one model and whose answers came from
+        two is a substitution, and a substitution is reported, never averaged
+        over.
+        """
+        return dict(Counter(r["served"] for r in self.responses if r.get("served")))
+
+    def served_is_mixed(self) -> bool:
+        """Did more than one model answer, or one the header did not name?"""
+        seen = set(self.served_counts())
+        return len(seen) > 1 or bool(seen) and self.served not in seen
+
     def counts(self) -> dict[str, int]:
         return dict(Counter(r["verdict"] for r in self.rulings))
 
@@ -257,6 +280,8 @@ class Run:
             "bracket": self.bracket,
             "run": self.header.get("run", ""),
             "served": self.served or "UNRECORDED",
+            "served_counts": self.served_counts(),
+            "served_mixed": self.served_is_mixed(),
             "endpoint": (self.header.get("provenance") or {}).get("endpoint", ""),
             "judge": (self.header.get("judge") or {}).get("id", ""),
             "rulings": len(self.rulings),

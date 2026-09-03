@@ -38,6 +38,10 @@ def _cmd_replay(args) -> int:
 
     print(f"run       {summary['run'] or '(no header)'}")
     print(f"served    {summary['served']}")
+    if summary["served_mixed"]:
+        mix = ", ".join(f"{m} x{n}" for m, n in
+                        sorted(summary["served_counts"].items(), key=lambda kv: -kv[1]))
+        print(f"          MIXED — the calls were answered by: {mix}")
     if summary["endpoint"]:
         print(f"endpoint  {summary['endpoint']}")
     if summary["judge"]:
@@ -63,6 +67,10 @@ def _cmd_replay(args) -> int:
             seen[r.get("note", "(no reason given)")] = seen.get(r.get("note", ""), 0) + 1
         for note, n in sorted(seen.items(), key=lambda kv: -kv[1])[:10]:
             print(f"  {n:4}x {note}")
+    if summary["served_mixed"]:
+        print(f"\nWARNING: more than one model answered this run, so its numbers "
+              f"are a mixture and the banner above names only the first. See "
+              f"`served` above for the counts.", file=sys.stderr)
     if summary["served"] == "UNRECORDED":
         print("\nWARNING: this journal records no served model. Its numbers name "
               "nothing and cannot be reproduced.", file=sys.stderr)
