@@ -849,6 +849,73 @@ been re-swept under the corrected outcome. When it is:
 3. `trust_game` and the garden are untouched: neither uses this arena.
 
 
+## A17 — a threshold outlives the outcome it was picked for (2026-09-03)
+
+`§A16`'s re-sweep returned **`FAILED — no flip in range: both ends sit on the same
+side of 3 (2.74, 0.198)`**, and `§A16`'s prediction 2 said `COULD-NOT-JUDGE`. The
+prediction was wrong, and it was wrong for a reason worth more than the run.
+
+**The bar is unreachable, and A16 is what made it unreachable.** `threshold = 3.0`
+was picked when `false_reach` counted distinct tellers who ever spread the
+rumour — a count out of six, where 3 is the middle. The corrected outcome is a
+per-round mean whose ceiling is the chain depth, five, and whose **no-institution
+baseline is 2.74**. Nothing in the study can now exceed 3.0, with the institution
+switched off or on. The sweep asked whether an unreachable line gets crossed, and
+correctly answered no.
+
+**This is a one-decider failure of a kind not on the list.** `§A16` collapsed
+three definitions of reach into one and never asked what the threshold was
+calibrated against. **An outcome and the line it is compared to are a single
+decision**, and changing the scale of one silently invalidates the other. Nothing
+warned: the run was green all the way to a verdict that means nothing.
+`FAILED` here is not a finding about institutions. It is a finding about a bar.
+
+**The repair is a rule already registered, not a new one.** `§A8` picks a
+threshold as the **midpoint of the two ends measured in the pilot**, stated as a
+rule rather than a number precisely so it cannot be tuned — a midpoint cannot be
+moved toward a pleasing answer without moving the ends, and these ends are
+published in `studies/telephone.jsonl`. `§A12` restricts that rule to studies
+whose ends are DISTINGUISHABLE; here they are 2.74 against 0.198 inside a noise
+floor of 0.196, a separation of thirteen resolutions, so the precondition holds
+with room to spare.
+
+```
+(2.7395833 + 0.1979167) / 2 = 1.46875  ->  threshold 1.47
+```
+
+**Direction, stated because this is the suspicious move.** Re-picking a threshold
+after a `FAILED` is exactly what `§A11` did and what `§A14` flagged as the trade
+to distrust. Two things separate this from that one, and the reader should weigh
+them rather than take my word: the old bar is not merely unflattering but
+**arithmetically unreachable**, which is checkable from the ends above; and the
+staleness was introduced by this repository's own change one commit earlier, so
+leaving it would publish a broken study rather than a modest one. **It is still a
+re-pick after a refusal, and it is still the direction to distrust.**
+
+**What the corrected outcome bought, which is the one clear win.** Per-sample
+noise is 0.240 against an effect 2.54 wide — a signal-to-resolution ratio of
+**13**, where the old metric managed 4.2 (noise 0.882, effect 3.67). The
+measurement is better conditioned than the one it replaces, independently of any
+verdict.
+
+**Predictions.**
+
+1. **`FAILED` is excluded.** The ends straddle 1.47 by construction, which is the
+   same argument `§A11` registered and the same one that held. If this returns
+   `FAILED`, the ends have moved and the study is unstable.
+2. **`PASSED` or `COULD-NOT-JUDGE`, and I do not know which — leaning
+   COULD-NOT-JUDGE.** The arithmetic, registered so the guess is checkable: the
+   crossing sits near `x ≈ 0.2`; the first midpoint at 0.5 measures ≈ 0.44, far
+   outside the 0.196 resolution, so it should narrow to `[0, 0.5]`; the second at
+   0.25 sits roughly 0.05 from the crossing on a local slope near 4.6, giving a
+   gap near 0.23 against a resolution of 0.196. **That is a coin-flip margin.**
+   Clearing it narrows to 25% of the range and passes; missing it stops at 50%
+   and refuses. This is `§A15`'s structural point arriving on schedule — the
+   floor catches a bisection as it converges — and the only question is whether
+   it catches this one before or after the step that would have earned a bracket.
+3. **No other study moves.** Nothing else uses this arena or this threshold.
+
+
 ---
 
 # What landed
@@ -897,12 +964,36 @@ before the run it describes; everything it compares against was.
 | A16 the three reach measures | — computed before the change, no prediction registered | 4-round ratio 0.759 → **0.810** and 0.738 → **0.926**; 16-round 0.984 → **1.046** and 0.960 → **1.042** |
 | A16 existing journals | replay unchanged, since re-derivation reads recorded outcomes | **unchanged** — every bracket re-derives from its own evidence |
 | A16 the fake-world tests | two encode the old metric and must be restated, not relaxed | restated: without an institution the rumour **out-travels** the fact (5.00 vs 1.75), which the speaker count read as 5.00 = 5.00 |
-| A16 `telephone` re-swept | NOT RUN — three predictions registered above and unsettled | pending |
+| A16 corrected `false_reach` | reproduces the hand-derived table from the journal | **right, exactly** — 2.906 / 0.438 / 0.146 / 0.146 to three decimals, replayed with no model |
+| A16 `telephone` re-swept | COULD-NOT-JUDGE; a PASSED would be a surprise | **FAILED — wrong**, and neither surprise: the bar was unreachable. `threshold = 3.0` was picked for a count out of six; the corrected outcome's no-institution baseline is 2.74 and its ceiling is 5. §A17 |
+| A16 other studies | untouched; nothing else uses this arena | **unchanged** — all seven other runs re-derive identically |
+| A17 `FAILED` excluded | the ends straddle 1.47 by construction | **right** — `PASSED`, and the ends came back 2.760 / 0.156 |
+| A17 the verdict | PASSED or COULD-NOT-JUDGE, **leaning COULD-NOT-JUDGE** | **PASSED — the bound held and the lean was wrong.** `flips in [0, 0.125]`, an eighth of the range, 36 of 48 runs |
+| A17 the arithmetic behind that lean | crossing near `x ≈ 0.2`; the decisive probe sits ~0.23 from the bar against a resolution of 0.196 | **the margin was right and the location was wrong.** The decisive probe was 0.241 against a resolution of 0.203 — near-exact — but at `x = 0.125`, not 0.25. The crossing is at ≈0.0625, not 0.2: the curve is far steeper near zero than the roughly-linear fall I assumed, so the search cleared two steps I expected it to fail |
+| A17 other studies | nothing else uses this arena or this threshold | **unchanged** |
 
 Two of the three registered numeric predictions were wrong in a way the data
 explains, and both are recorded that way rather than quietly dropped. The
 prediction that mattered — that P2 would refuse — was written down before the
 verdict existed.
+
+**A17 is the first amendment here to turn a refusal into a located boundary, and
+it did it by fixing a bar rather than by finding an effect.** The effect was
+always in the journal: `telephone`'s rumour reach falls 2.760 → 0.156 across the
+coordinate and nearly half of that is bought at `reputation_threshold = 0.0625`.
+Three sweeps failed to bracket it — once at a threshold inherited from a different
+metric, once at a stopping rule that called half a range a pass, once at a bar
+that had become unreachable. **None of those were noise, and the one amendment
+that tried to fix them with statistical power (§A14) was the only one that bought
+nothing.**
+
+**A16 exposed a failure mode that is not in the smell table.** It collapsed three
+definitions of reach into one and never asked what the threshold was calibrated
+against, so a green run reached a verdict that meant nothing — `FAILED` against a
+line the study can no longer cross. **An outcome and the bar it is compared to are
+one decision, not two**, and rescaling either silently invalidates the other. That
+is the cost of the one amendment on this record that changed code before
+registering a prediction, and it is a fair price to have paid for it.
 
 **A15 went three-for-three right**, which is the first amendment on this record to
 do so, and it is worth noticing what kind of predictions those were: two of them
@@ -937,17 +1028,20 @@ Being wrong five times out of nine is not the failure here; not being able to
 say so would have been. Every one of the five is a row above, with the number
 that beat it.
 
-**Not done, current as of §A16.** Nothing on the shelf is unswept, and two things
-are outstanding. **`telephone` has not been re-swept under the corrected outcome**
-(§A16), so its three predictions are registered and unsettled; the cost ratio does
-not depend on that run, having been derived from the journal it already has.
-**`trust_game`** stands where §A14 left it: its ends differ by 0.041, seeing that
+**Not done, current as of §A17.** Nothing on the shelf is unswept and one thing is
+outstanding. **`trust_game`** stands where §A14 left it: its ends differ by 0.041, seeing that
 needs 48 replicates, and its reader discriminates at 0.675 and is itself part of
 the noise floor that stopped its own sweep. Widening its range is a study
 redesign and is still not something to do unattended to make a shelf look better.
 
-**The shelf, after §A15 and §A16: one PASSED across five studies.** The garden's
-`[0, 0.0625]` — 1.6% of its range, on the 4B, at a threshold §A8 re-picked and
-registered — is the only located boundary this repository has. Three FAILED, five
-COULD-NOT-JUDGE. That is a thinner shelf than yesterday's and every step of the
-thinning is a row above.
+**The shelf, after §A15 through §A17: two PASSED across five studies.** The
+garden's `[0, 0.0625]` — 1.6% of its range, on the 4B — and `telephone`'s
+`[0, 0.125]`, an eighth of its range on the 35B. Both thresholds were re-picked
+by §A8's midpoint rule after an inherited bar refused, which is either the rule
+earning its place or the one thing on this record most worth a sceptical reader's
+attention, and the ends it was computed from are published either way. Four
+FAILED, five COULD-NOT-JUDGE.
+
+The shelf got thinner through §A15 and §A16 and then gained a boundary in §A17,
+and the order matters: **the boundary was found by the machinery that had just
+spent two amendments taking results away.** Every step is a row above.

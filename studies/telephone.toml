@@ -61,7 +61,7 @@ lo          = 0.0
 hi          = 1.0
 outcome     = "telephone:false_reach"
 name        = "false-claim reach"
-threshold   = 3.0
+threshold = 1.47
 # How narrow a bracket has to be, as a FRACTION of this coordinate's range,
 # before it counts as a located boundary. A quarter is the library default; it
 # is written here because a bar somebody registered before a run is worth more

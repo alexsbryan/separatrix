@@ -572,6 +572,57 @@ Three cautions, all the reader's to weigh:
   step, halted at the same noise floor that had refused `commons` a step earlier.
   As at four rounds, **the result here is not in the bracket.**
 
+### And then the bar turned out to be unreachable, and the boundary was there all along
+
+Re-swept under the corrected outcome, `telephone` returned
+**`FAILED — no flip in range: both ends sit on the same side of 3 (2.74, 0.198)`**.
+Not a finding about institutions: `threshold = 3.0` was chosen when the outcome
+was a count out of six, and the corrected outcome is a per-round mean whose
+ceiling is the chain depth, five, with a no-institution baseline of 2.74. **The
+bar had become arithmetically unreachable and nothing warned** — the run was green
+all the way to a verdict that meant nothing. `§A17`: an outcome and the line it is
+compared against are one decision, and rescaling either silently invalidates the
+other.
+
+Re-picked by `§A8`'s registered rule — the midpoint of the ends the pilot
+measured, `(2.7395833 + 0.1979167) / 2 = 1.47` — the same study resolves:
+
+```
+PASSED  reputation_threshold flips in [0, 0.125]  (width 0.125, inside the 0.25 of range this study asked for)
+  noise 0.2489 at threshold 1.47; 36 runs
+  stopped at the noise floor: false-claim reach 1.49 at 0.0625 is within 0.203 of
+  the threshold (per-sample noise 0.249 over 6 replicates)
+```
+
+| standing required | rumour reach | true claim reach | cost ratio |
+|---|---|---|---|
+| 0 — no institution | 2.760 | 3.438 | — |
+| 0.0625 | 1.490 | 2.042 | **1.098** |
+| 0.125 | 1.229 | 1.625 | **1.184** |
+| 0.25 | 0.865 | 1.448 | **1.049** |
+| 0.5 | 0.333 | 0.948 | **1.026** |
+| 1 — absolute | 0.156 | 0.719 | **1.044** |
+
+**Two findings, and the second is the one that matters.**
+
+**The boundary sits at the weakest institution the study can express.** The
+crossing is bracketed in `[0, 0.125]`, an eighth of the range, and the probe that
+stopped the search measured 1.49 against a bar of 1.47 at
+`reputation_threshold = 0.0625`. **Nearly half the total suppression — 1.27 of a
+2.60 drop — is bought by requiring a teller to hold a sixteenth of maximum
+standing.** Everything from there to absolute quarantine buys the other half.
+This is the same shape the garden showed: almost the whole effect in the first
+sixteenth, and a long flat stretch where someone tuning the knob would be
+spending for nothing.
+
+**The cost ratio is above 1.0 at every strength tested** — 1.10, 1.18, 1.05,
+1.03, 1.04. There is no setting of this institution that destroys less honest
+reach than rumour reach. It is not that the norm is badly tuned; **it is
+net-negative across its entire range**, and the worst bargain in it is the mild
+version at 0.125. The answer to *does an institution suppress fabrication without
+suppressing fact?* is no, at every strength, and now with a located boundary
+saying where the suppression is actually bought.
+
 ## 9. Two ends that are the same number, and the verdict that says so
 
 `trust_game` swept `temptation` over `[1, 8]` at a reward of 3, punishment 1,

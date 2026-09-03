@@ -158,42 +158,54 @@ A rumour and a true claim spread through six agents, each retelling what it hear
 rather than the source. The knob is how much standing a teller must keep to be
 believed at all — an institution, swept from none to absolute.
 
-| standing required | true claim reach | rumour reach | rumour suppressed | honest reach lost | cost |
-|---|---|---|---|---|---|
-| none | 3.542 | 2.906 | — | — | — |
-| 0.5 | 0.958 | 0.438 | 2.468 | 2.584 | **1.05** |
-| 0.75 | 0.667 | 0.146 | 2.760 | 2.875 | **1.04** |
-| absolute | 0.667 | 0.146 | 2.760 | 2.875 | **1.04** |
+```
+PASSED  reputation_threshold flips in [0, 0.125]  (width 0.125, inside the 0.25 of range this study asked for)
+  noise 0.2489 at threshold 1.47; 36 runs
+```
 
-It works, in the sense that the rumour stops travelling: its reach falls by 95%.
-It takes the true claim down with it, and the ratio between those is the finding.
-**For every unit of rumour reach this institution suppresses, it destroys about
-1.04 units of honest reach** — slightly more than it buys. It is not a selective
-instrument at all. At this strength you would do better switching it off.
+| standing required | rumour reach | true claim reach | cost |
+|---|---|---|---|
+| none | 2.760 | 3.438 | — |
+| 0.0625 | 1.490 | 2.042 | **1.10** |
+| 0.125 | 1.229 | 1.625 | **1.18** |
+| 0.25 | 0.865 | 1.448 | **1.05** |
+| 0.5 | 0.333 | 0.948 | **1.03** |
+| absolute | 0.156 | 0.719 | **1.04** |
 
-The sweep itself returns `COULD-NOT-JUDGE`: the ends straddle the threshold, so
-the crossing is in there somewhere, but the search halted at its noise floor
-holding a bracket half the width of the range, which locates nothing. **The table
-is not the bracket.** It is what the run journalled on the way, and a direction
-with a cost attached is a smaller claim than a boundary. Saying which of the two
-you have is the whole discipline.
+It works, in the sense that the rumour stops travelling: reach falls by 94%
+across the range. **Nearly half of that is bought by the weakest institution the
+study can express** — requiring a teller to hold a sixteenth of maximum standing
+takes rumour reach from 2.76 to 1.49, and everything from there to absolute
+quarantine buys the other half. That is where the boundary is, and it is the same
+shape the garden showed: almost the whole effect in the first sixteenth, then a
+long flat stretch where someone tuning the knob would be spending for nothing.
+
+Then the part you did not want. **The cost ratio is above 1.0 at every strength
+tested.** For every unit of rumour reach this institution suppresses it destroys
+slightly more than a unit of honest reach — and that is not a tuning problem,
+because there is no setting where it comes out ahead. The worst bargain in the
+range is the mild version. A reputation norm scores a teller on whether its last
+transmission held up, and an honest agent that faithfully relays a rumour it was
+handed is docked for relaying, so the quarantine falls on tellers rather than on
+claims.
 
 That cost number has been wrong twice, both times in the institution's favour,
-and both times the correction came from this repository's own machinery rather
-than from a reader. The first scorer punished an agent for *refusing* the rumour
-as hard as for spreading it, so the institution was credited for silencing
-honesty. The second counted everyone who spoke rather than everyone who actually
-passed the claim on, which credited it again for quieting tellers who were
-spreading nothing. Repairing the second moved the four-round number from 0.74 to
-0.93; running the same study long enough for the institution to settle moved it
-to 1.04.
+and both corrections came from this repository's own machinery rather than from a
+reader. The first scorer punished an agent for *refusing* the rumour as hard as
+for spreading it. The second counted everyone who spoke rather than everyone who
+actually passed the claim on, which credited the institution again for quieting
+tellers who were spreading nothing.
 
 The two repairs were not made to the same standard, and
 [`PREREGISTRATION.md`](PREREGISTRATION.md) says which was which. The first was
 registered, with its predictions, before it was made (§A9). The second was
 computed from the journal first and the code changed to match (§A16) — the
 direction is the one that costs the finding rather than flatters it, and that is
-the argument for it, but it is not the same guarantee.
+the argument for it, but it is not the same guarantee. It also cost something
+immediately: rescaling the outcome left the threshold measuring against a ceiling
+that no longer existed, and the next sweep returned a confident `FAILED` against
+a line the study could no longer cross (§A17). **An outcome and the bar it is
+compared to are one decision, not two.**
 
 ## Writing an experiment
 
@@ -250,33 +262,41 @@ reader is fair to both sides.
 
 Early and small: one person, one laptop, and about a dollar of rented GPU.
 
-Across five studies there is **one located boundary** — the garden's
-`[0, 0.0625]`, 1.6% of the range it was given — three ranges where the crossing
-provably is not, and five refusals. Every refusal names what it would have taken
-to resolve it. That is a thin shelf, and it is the honest one: the shelf was
-larger a day ago and got smaller as the verdict rules were tightened, twice,
-each time taking results away and adding none.
+Across five studies there are **two located boundaries** — the garden's
+`[0, 0.0625]`, 1.6% of the range it was given, and telephone's `[0, 0.125]`, an
+eighth of its own — four ranges where the crossing provably is not, and five
+refusals. Every refusal names what it would have taken to resolve it.
 
-Twenty-three predictions have been registered before the runs that settled them;
-twenty-one have settled. **Twelve were right, eight were wrong**, and one was
-cancelled when its precondition turned out not to hold. Three of the four wrong
-ones are from a single amendment that set out to fix a class of refusal by adding
-statistical power and could not: bisection walks toward the crossing, where the
-gap it is measuring goes to zero by construction, so the noise floor always
-catches up and the replicates needed grow without bound. It bought exactly the
-resolution it registered and bought nothing. Every wrong prediction is a row in
+That shelf was thinner an hour ago. Two rounds of tightening the verdict rules
+took results away and added none; the boundary turned up immediately afterwards,
+found by the same machinery, once a threshold that had been inherited from a
+retired metric was replaced by the midpoint rule. **Both located boundaries sit at
+thresholds re-picked after an inherited bar refused** — which is either that rule
+earning its place or the thing on this record most deserving a sceptical read.
+The ends every midpoint was computed from are published either way.
+
+Twenty-six predictions have been registered before the runs that settled them.
+**Fifteen were right, ten were wrong**, and one was cancelled when its
+precondition turned out not to hold. Three of the wrong ones come from a single
+amendment that set out to fix a class of refusal by adding statistical power and
+could not: bisection walks toward the crossing, where the gap it is measuring goes
+to zero by construction, so the noise floor always catches up and the replicates
+needed grow without bound. **It bought exactly the resolution it registered and
+bought nothing.** Every wrong prediction is a row in
 [`PREREGISTRATION.md`](PREREGISTRATION.md) with the number that beat it.
 
 Three recorded verdicts do not survive re-derivation from their own samples, and
 `sep bracket` says so on every one. That is the mechanism working, not a caveat.
 
-Six defects found by running rather than by reading, none of which would have
+Seven defects found by running rather than by reading, none of which would have
 failed a test and all of which would have produced a number: a response cache
 that made three replicates into one; a swept coordinate that never reached the
 agents; a second that never reached the judge; replies scored as answers after
 the server cut them off mid-sentence; a judge that could not tell the two classes
-apart; and a verdict that handed back the range it was given as though it had
-narrowed it.
+apart; a verdict that handed back the range it was given as though it had
+narrowed it; and a threshold that outlived the outcome it was calibrated for, so
+a sweep returned a confident refusal against a line its own study could no longer
+cross.
 
 ## Further reading
 
