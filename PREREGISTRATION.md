@@ -530,6 +530,63 @@ already owns the right word for it. This is recorded as a defect to fix in the
 sweep's verdict logic, NOT fixed in this run, and `FINDINGS.md` reports the
 telephone result with the width beside it either way.
 
+## A13 — a PASSED that never narrowed the range is downgraded to COULD-NOT-JUDGE (2026-09-02)
+
+`§A12` recorded this as suspected on one run and declined to fix it there. It is
+now confirmed on two, which is half the shelf:
+
+```
+telephone   PASSED  reputation_threshold flips in [0, 1]   (width 1)
+commons     PASSED  regeneration         flips in [2, 60]  (width 58)
+```
+
+Both brackets are **the entire input range.** Neither localised anything, and
+both carry the same word as the garden's `PASSED` at width 0.0625 — sixty-four
+times narrower than the range it was handed.
+
+**The mechanism, from the code rather than from the symptom.** `Search._finish`
+takes `verdict=Verdict.PASSED` as its default. The noise-floor branch calls it
+without a verdict, and that branch can fire on the FIRST bisection step: the
+midpoint lands within the resolution of the threshold, so neither `self.lo` nor
+`self.hi` is ever assigned, and they are still the coordinate's own ends. The
+result is a bracket identical to the input, reported as a resolved boundary.
+
+**The change.** In `_finish`, a `PASSED` whose bracket still spans the full
+coordinate range becomes `COULD_NOT_JUDGE`, with a note saying both true things:
+the ends straddle the threshold so a flip is in there somewhere, and the search
+was stopped before narrowing it at all, so this locates nothing. One decider, in
+the one place every finish path already goes through.
+
+**Direction: HARDER. This takes results away and adds none.** It can only turn a
+PASSED into a COULD-NOT-JUDGE; no other transition is reachable. Two of this
+repo's four live studies lose a PASSED to it, and the ones lost are the two whose
+headline numbers went into `FINDINGS.md` and `README.md` in the last hour.
+
+**§18.6 requires reporting in both directions, so every journal in the
+repository is re-derived, not only the two this was written for.** `sep bracket`
+replays a journal with no model, so this costs nothing and there is no excuse
+for a selective check. Each verdict before and after goes in the commit,
+including any that change which nobody predicted.
+
+**Predictions.**
+
+1. `telephone` and `commons` change `PASSED` → `COULD-NOT-JUDGE`.
+2. The garden's resolved bracket (`§A8`, width 0.0625 of a range of 4) does
+   **not** change. If it does, the rule is wrong rather than the result, and the
+   rule is what gets reverted.
+3. The garden's two `FAILED` runs, the null control, and `trust_game`'s
+   `COULD-NOT-JUDGE` do not change: no path from those verdicts exists.
+4. No test in the suite fails for a reason other than asserting the old
+   behaviour. Any that does is a real regression and stops this.
+
+**What it costs the shelf, said plainly.** After this, the four studies stand at
+one PASSED, one FAILED, and two COULD-NOT-JUDGE, and the honest summary of the
+last hour's work is that `telephone` and `commons` measured directions rather
+than boundaries. That is a worse-looking shelf and a truer one. The `telephone`
+cost ratio of 0.74 is unaffected — it was never derived from the bracket, and
+`FINDINGS.md` §8 already said the result was not in the bracket.
+
+
 
 
 
