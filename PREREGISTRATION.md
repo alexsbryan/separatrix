@@ -329,6 +329,90 @@ published in `studies/epistemic-garden-4b.jsonl`.
   Three refusals in a row would say the world is too small, and the next lever
   is more absent probes — the same arithmetic that has been right twice.
 
+## A9 — telephone's rule is repaired before its sweep, and its labels with it (2026-09-02)
+
+The defect `§A5` named and deliberately left is being fixed now. The reason for
+leaving it has expired: it was left so that a rule would not change mid-flight,
+and `telephone` has never flown. There is no telephone number this makes nicer,
+because there is no telephone number.
+
+It is worse than `§A5` recorded. Reading `studies/telephone.py` and
+`arenas/diffusion.py` together, **one root produces three seams**, and the root
+is that groundedness is keyed off the CLAIM rather than off what the teller
+said:
+
+- `faithful` short-circuits on `facts["kind"] != "grounded"`. Every hop carrying
+  the false claim is FAILED whatever the teller did with it.
+- so `reputation.update(teller.id, grounded)` in the arena penalises a teller
+  for REFUSING a false rumour exactly as much as for spreading it — and the
+  swept coordinate is the threshold that then quarantines them. **The study as
+  written measures an institution that learns to silence its honest agents, and
+  would have reported it as suppression working.** `§A5` named the metric; it
+  did not name this.
+- `false_reach` takes `{teller for ruling if claim == "cure"}` with no reference
+  to the verdict, so a refusal is reach.
+
+**The labelled cases carry the same defect.** All 16 ungrounded-claim rows in
+`studies/telephone-cases.jsonl` are `expected: failed`, including *"I cannot
+pass that information along, as it contradicts the facts I was given"* and two
+that restate the source almost verbatim. The labels were derived from `kind`,
+not read off the text. A correct judge probed against them would be REFUSED for
+being right: the instrument that validates the instrument is broken in the same
+place (§18.4). Relabelling is therefore part of the repair, not a separate
+liberty taken with it.
+
+**The labelling rule, stated before it is applied.** A retelling is `passed` iff
+every factual assertion it makes is supported by that claim's source. Declining
+to pass something on passes. Restating only what the source does say passes.
+Adding unsupported specifics fails — on EITHER claim, so an embellished
+retelling of the true orchid count fails too. The rule is applied to all 35
+rows, not only to the 16 suspected ones, because a rule applied to the rows you
+expect to move is not a rule.
+
+**The judge becomes a `ChatJudge` at tier ESTIMATED**, keeping the keyword
+`FoldJudge` as the cheap comparator, exactly as `trust_game` does. A word list
+cannot separate mention from use — "cures fever within the hour" appears in the
+reply that spreads it and in the reply that refuses it — and a word list that
+tried is what `FINDINGS §1` retracts.
+
+**Direction: this makes a boundary HARDER to find, not easier.** Both changes
+push the same way. Honest tellers keep their standing, so quarantine breaks
+fewer chains and the curve flattens; and `false_reach` counts spreaders instead
+of speakers, so the no-institution end starts lower and may already sit below
+the threshold of 3.0. An amendment that makes a result easier to get is the one
+to be suspicious of, and this is not one.
+
+**Predictions, before the relabelling and before the sweep.**
+
+1. Of the 16 ungrounded-claim rows, **6 to 10 flip** `failed` → `passed`. (Basis:
+   the first 150 characters of each row have been read, not the full texts.
+   Three careful rows are plainly refusals or restatements, and several vivid
+   rows appear to embellish only the night-blooming fact the source does
+   support.)
+2. Of the 19 grounded-claim rows, **2 to 6 flip** `passed` → `failed`, from
+   vivid embellishment adding specifics the ledger sentence does not carry.
+3. The `telephone` sweep comes back **FAILED — no flip in range**, because the
+   corrected `false_reach` at threshold 0 will already sit at or below 3.0.
+
+**The judge must pass its probe before the sweep runs.** If the reader is
+REFUSED against the relabelled cases, the sweep does not run and that is the
+published result for `telephone`.
+
+## A10 — the remaining three sweeps run on local hardware (2026-09-02)
+
+`§A7` rented an A6000 to get a second model. The three unrun studies do not
+need one: `commons.toml`, `telephone.toml` and `trust_game.toml` declare
+`model = "primary"` with no `base_url`, which is the local daemon on
+`localhost:9741`, serving `Qwen3.6-35B-A3B-MTP-UD-Q6_K`. That is the same model
+that served the harvest these studies' cases were drawn from, and the journal
+records what served every call either way.
+
+**Direction: neutral on the bar, and it costs nothing.** The registered bar for
+all three remains what `The rest of the shelf` already says — whatever verdict
+comes back, published. No study's threshold, budget or replicate count is
+changed by this amendment.
+
+
 ---
 
 # What landed
