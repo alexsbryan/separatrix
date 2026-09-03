@@ -202,6 +202,20 @@ suppression. Fixing that is in [`PREREGISTRATION.md`](PREREGISTRATION.md) §A9,
 it was registered before it was made, and the norm is still only 0.74-selective
 afterwards.
 
+The sweep itself returned `COULD-NOT-JUDGE` on this one: the ends straddle the
+threshold, so the crossing is in there, and three replicates could not say
+where. **The table above is not the bracket** — it is what the run journalled on
+the way, and it is reported here because it is what the study was asking. A
+direction with a cost attached is a smaller claim than a boundary, and saying
+which of the two you have is the whole discipline.
+
+That verdict says `COULD-NOT-JUDGE` because of something this project found in
+itself while writing this section up. It said `PASSED` first, with a bracket
+exactly as wide as the range it was given — and so, it turned out, had the very
+first live result the project ever published, for a month, underneath a
+retraction about something else. [`FINDINGS.md`](FINDINGS.md) §10 is that story
+and the seven-row before-and-after table that closed it.
+
 ## What it is
 
 An experiment is a configuration file plus two or three short functions. The
