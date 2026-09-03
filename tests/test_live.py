@@ -92,12 +92,12 @@ def test_the_shipped_reader_judge_survives_its_own_probe():
 
     studies = Path(__file__).parent.parent / "studies"
     sys.path.insert(0, str(studies))
-    from separatrix import Tier, Verdict, load_study, probe, resolve
+    from separatrix import Tier, Verdict, load_study, probe
 
     study = load_study(studies / "epistemic_garden.toml")
     assert study.judge.tier is Tier.ESTIMATED
-    cases = resolve(study.cases_ref, root=studies)()
-    assert len(cases) >= 20
+    cases = study.cases()
+    assert cases is not None and len(cases) >= 20
 
     try:
         probed = probe(study.judge, cases)

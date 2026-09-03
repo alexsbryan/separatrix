@@ -84,11 +84,19 @@ class Journal:
     that was mid-write and never the run."""
 
     def __init__(self, path: str | os.PathLike, provenance: Provenance,
-                 *, config: Mapping[str, Any] | None = None, judge: Mapping | None = None):
+                 *, config: Mapping[str, Any] | None = None, judge: Mapping | None = None,
+                 asking: Mapping[str, Any] | None = None):
         self.path = Path(path)
         self.provenance = provenance
         self.config = dict(config or {})
-        self.run_id = digest("run", provenance.identity(), self.config)
+        # WHAT WAS BEING LOOKED FOR is part of a run's identity, and leaving it
+        # out was a defect. Two sweeps of one study that differ only in the
+        # threshold are different experiments — one asks where fabrication
+        # crosses 50%, the other where it crosses 15% — and they were getting
+        # the same run id, so the second appended to the first's records and a
+        # fold over the file described neither.
+        self.asking = dict(asking or {})
+        self.run_id = digest("run", provenance.identity(), self.config, self.asking)
         self._fh = None
         self._judge = dict(judge or {})
 
@@ -104,6 +112,7 @@ class Journal:
         self._fh = self.path.open("a", encoding="utf-8")
         if self.run_id not in known:
             self._emit({"t": "header", "run": self.run_id, "config": self.config,
+                        "asking": self.asking,
                         "provenance": self.provenance.as_row(), "judge": self._judge})
         return self
 

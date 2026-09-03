@@ -24,9 +24,7 @@ out.
 """
 import re
 
-from separatrix import (Evolution, FoldJudge, Responder, Situation, labelled)
-
-CASES = __file__.replace("commons.py", "commons-cases.jsonl")
+from separatrix import (Evolution, FoldJudge, Responder, Situation)
 
 POOL = 100.0
 AGENTS = 4
@@ -92,10 +90,6 @@ def sustainable(facts):
 judge = FoldJudge(sustainable, id="commons@2",
                   observe=lambda f: {"take": take(f["text"]),
                                      "regeneration": float(f.get("regeneration", 10.0))})
-
-
-def cases():
-    return labelled(CASES)
 
 
 def fitness(rulings, config):

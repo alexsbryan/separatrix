@@ -190,6 +190,16 @@ class Validated:
         if callable(inner):
             inner(journal)
 
+    @property
+    def chat(self) -> Any:
+        """The endpoint the inner judge reads with, if it reads with one.
+
+        Forwarded because probing wraps the judge, and a caller asking "what
+        model is this instrument" would otherwise get the honest answer for an
+        unprobed judge and None for every probed one — which is backwards.
+        """
+        return getattr(self.inner, "chat", None)
+
     def validation(self) -> Validation:
         return self.measured
 

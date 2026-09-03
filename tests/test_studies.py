@@ -3,16 +3,15 @@
 from pathlib import Path
 
 import pytest
-from separatrix import Tier, Verdict, load_study, resolve, validate
+from separatrix import Tier, Verdict, load_study, validate
 
 STUDIES = sorted((Path(__file__).parent.parent / "studies").glob("*.toml"))
 
 
 def _cases(study):
-    ref = study.cases_ref
-    assert ref, f"{study.name} declares no cases, so its judge cannot be probed"
-    cases = resolve(ref, root=study.path.parent)
-    return cases() if callable(cases) else cases
+    cases = study.cases()
+    assert cases, f"{study.name} declares no cases, so its judge cannot be probed"
+    return cases
 
 
 def test_there_are_studies_to_check():
@@ -23,7 +22,8 @@ def test_there_are_studies_to_check():
 def test_a_shipped_study_loads_and_declares_what_probes_it(path):
     study = load_study(path)
     assert study.name and study.coordinate and study.outcome
-    assert study.cases_ref, "a study that declares no cases cannot be run at all"
+    assert study.cases() is not None, (
+        "a study that declares no cases cannot be run at all")
     assert len(_cases(study)) >= 20
 
 

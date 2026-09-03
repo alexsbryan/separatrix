@@ -8,7 +8,6 @@ name    = "trust-game"
 judge   = "trust_game:reader"
 arena   = "trust_game:arena"
 journal = "trust-game.jsonl"
-cases   = "trust_game:cases"
 
 # Arms are CONFIGS: the same disposition facing two payoff regimes. That only
 # works because the payoffs reach the agent's prompt — until 2026-09-02 they did

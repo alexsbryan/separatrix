@@ -245,3 +245,114 @@ gradient.
 The follow-on is a threshold picked from a pilot rather than inherited, and a
 model or a world in which the confident disposition actually fabricates. Neither
 is done here, and neither is claimed.
+
+## A7 — a second model, on rented hardware (2026-09-02)
+
+P2 landed as `§A6` said it would: `FAILED — no flip in range: both ends sit on
+the same side of 0.5 (0.0423, 0)`. The prediction was written before the verdict
+existed and the run was not re-thresholded to rescue it.
+
+That is a result about a subject in which fabrication does not happen. It says
+nothing about the reward structure, because selection cannot choose between
+dispositions that do not differ — so the study is being run again on a model
+where they do. An RTX A6000 rented by the minute (`docs/CLOUD_PEER.md`), solo
+mode, carrying `Qwen3.5-4B` and `Qwen3.8-27B`.
+
+**Nothing in the study changes but the endpoint.** Same world, same rule, same
+seeds, same coordinate, same threshold, same replicates, same budget — one line
+of TOML. If the boundary resolves here and not on the 35B, that is a fact about
+the models and not about the method, and the two journals sit side by side.
+
+- **Registered before the sweep, from 73 harvested and hand-labelled replies:**
+  the confident arm fabricates on **46%** of unanswerable probes and the
+  grounded arm on **4%**. Both ends therefore straddle the 0.5 threshold badly
+  enough that a crossing is plausible and not guaranteed.
+- **Success: a `PASSED` bracket narrower than `[0, 4]`.**
+- **If it refuses:** published with the measured noise, exactly as the 35B's was.
+- **Registered before the sweep:** per-sample noise floor `sqrt(p(1-p)/48)` at
+  p ≈ 0.25 is **0.063**. The 35B's equivalent prediction was right about the
+  formula and wrong about the p it was fed, because that p came from the
+  artifact; this one comes from labelled replies.
+
+### The reader is not the subject, and the probe is why anyone would believe it
+
+Both models were probed as READERS against the same 73 labelled replies, before
+either was allowed to judge anything:
+
+```
+27B (primary)  PASSED  discrimination 0.85   fabricator 4/48   grounder 0/25  p=0.292
+4B  (fast)     FAILED  discrimination 0.37   fabricator 15/48  grounder 0/25  p=0.001
+                       REFUSED — this judge's blind spot tracks the coordinate
+```
+
+**A 4B cannot be trusted to read a 4B's replies**, and its errors do not fall
+evenly: all fifteen are on the arm that fabricates, which is the arm the
+coordinate moves. Letting it judge would have manufactured a boundary. The
+sweep runs on the 27B, and the whole question cost about two cents of rented
+GPU time to settle.
+
+## A8 — a threshold picked from the pilot, and the rule that picked it (2026-09-02)
+
+The 4B sweep landed `FAILED — no flip in range: both ends sit on the same side
+of 0.5 (0.292, 0.0139)`. The effect is there and it is large — **a 21-fold
+reduction in fabrication** across the coordinate — and there is no boundary,
+because 0.5 is not a line this outcome ever crosses.
+
+**That threshold was inherited from the retracted measurement**, where an
+artifact put the low end at 0.625 and 0.5 looked like a sensible middle. It
+was never a claim about anything; it was a leftover.
+
+So the study is being asked again, with a threshold picked by a **rule stated
+before it is computed**: the midpoint of the two ends measured in the pilot.
+
+```
+(0.292 + 0.0139) / 2 = 0.153  ->  threshold 0.15
+```
+
+The rule is the pre-registration, not the number. A midpoint cannot be tuned
+toward a pleasing answer without moving the ends, and the ends are already
+published in `studies/epistemic-garden-4b.jsonl`.
+
+- **This is a different question, not a retry.** "Where does fabrication cross
+  a half" and "where does it cross a seventh" are different experiments. The
+  first one's verdict stands published exactly as it landed, and the second
+  appends to the same journal as its own run — which required a fix, because
+  until now a run's identity did not include what it was looking for and the
+  two would have collided under one id
+  (`tests/test_journal.py::test_two_sweeps_that_ask_different_questions_are_different_runs`).
+- **Success: a `PASSED` bracket narrower than `[0, 4]`.**
+- **Registered noise, from the pilot's own replicates:** pooled within-group
+  spread ≈ **0.027**, so resolution at 3 replicates ≈ **0.031**. A midpoint
+  lands unresolvable if it falls within 0.031 of 0.15, and the sweep will say
+  so rather than bisect through it.
+- **If it refuses:** published with the measured noise, like both of the others.
+  Three refusals in a row would say the world is too small, and the next lever
+  is more absent probes — the same arithmetic that has been right twice.
+
+---
+
+# What landed
+
+Every bar above, against what happened. Nothing in this section was written
+before the run it describes; everything it compares against was.
+
+| run | registered bar | verdict |
+|---|---|---|
+| P0 instrument | replicates are separate draws | landed; gate watched failing at noise 0.0 |
+| P1 model judge | either verdict, published | PASSED, then re-probed on harvested cases |
+| P2 garden, 35B | PASSED bracket, noise 0.07–0.14 | **FAILED — no flip in range**, as `§A6` predicted before it finished |
+| P2 noise | `sqrt(p(1-p)/48)` at p≈0.4 = 0.071 | formula right, p wrong: the 0.4 came from the artifact, the real p is 0.04 |
+| A7 garden, 4B @ 0.5 | PASSED bracket | **FAILED — no flip in range** (0.292, 0.0139) |
+| A8 garden, 4B @ 0.15 | PASSED bracket narrower than [0, 4] | **PASSED — flips in [0, 0.0625]**, width 0.0625, noise 0.0139 |
+| A8 noise | pooled spread ≈ 0.027, resolution ≈ 0.031 | measured 0.0139 — quieter than registered |
+| A7 readers | either verdict, published | 27B PASSED (disc 0.85), 4B **REFUSED** (p=0.001) |
+| P4 null control | any verdict except PASSED | **FAILED — no flip in range** (0.250, 0.236) |
+| P3 remaining studies | whatever verdict comes back | judges probed; **sweeps not run** |
+
+Two of the three registered numeric predictions were wrong in a way the data
+explains, and both are recorded that way rather than quietly dropped. The
+prediction that mattered — that P2 would refuse — was written down before the
+verdict existed.
+
+**Not done:** `commons`, `telephone` and `trust_game` have probed judges and no
+sweeps. Nothing here claims otherwise.

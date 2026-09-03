@@ -223,3 +223,30 @@ def test_a_sweep_journal_is_folded_as_a_sweep(tmp_path):
     assert run.verdict() is live.verdict          # not NEVER_RAN
     assert run.summary()["kind"] == "sweep"
     assert run.summary()["samples"] == live.samples
+
+
+def test_two_sweeps_that_ask_different_questions_are_different_runs(tmp_path):
+    """A run's identity has to include what it was looking for.
+
+    Sweeping one study at threshold 0.5 and then at 0.15 is two experiments —
+    "where does fabrication cross a half" and "where does it cross a seventh" —
+    and before this they shared a run id, so the second appended to the first's
+    records and a fold over the file described neither.
+    """
+    from separatrix import Journal, Provenance
+
+    path = tmp_path / "j.jsonl"
+    p = Provenance(served="model-7B")
+    base = {"coordinate": "w", "lo": 0.0, "hi": 4.0, "outcome": "rate",
+            "replicates": 3, "paired": True}
+
+    with Journal(path, p, config={"w": 0.0}, asking={**base, "threshold": 0.5}) as a:
+        first = a.run_id
+    with Journal(path, p, config={"w": 0.0}, asking={**base, "threshold": 0.15}) as b:
+        second = b.run_id
+    with Journal(path, p, config={"w": 0.0}, asking={**base, "threshold": 0.5}) as c:
+        again = c.run_id
+
+    assert first != second, "a different threshold is a different experiment"
+    assert first == again, "the same question resumes the same run"
+    assert Run.runs(path) == [first, second], "one header apiece, and only two"

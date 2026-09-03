@@ -15,8 +15,6 @@ from separatrix import (Agent, Claim, Diffusion, FoldJudge, Responder, Situation
                         labelled)
 from separatrix.arenas.diffusion import RETELL
 
-CASES = __file__.replace("telephone.py", "telephone-cases.jsonl")
-
 TRUE = Claim(id="orchids", grounded=True,
              statement="The Keeper's ledger records thirty-seven rare orchids.",
              source="The Keeper's ledger records thirty-seven rare orchids in the "
@@ -69,10 +67,6 @@ def probes(config=None):
                       kind="grounded" if claim.grounded else "ungrounded",
                       meta={"claim": claim.id})
             for claim in (TRUE, FALSE)]
-
-
-def cases():
-    return labelled(CASES)
 
 
 def false_reach(rulings):

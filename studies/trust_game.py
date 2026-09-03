@@ -11,10 +11,8 @@ that recognises one strategy's vocabulary and not another's would invent a
 difference between payoff regimes that is not there.
 """
 from separatrix import (Agent, ChatJudge, FoldJudge, Responder, Situation,
-                        Tournament, labelled)
+                        Tournament)
 from separatrix.arenas.tournament import DEFAULT_PAYOFFS, FIRST, LATER
-
-CASES = __file__.replace("trust_game.py", "trust-game-cases.jsonl")
 
 COOPERATE = ("i cooperate", "cooperate", "i'll cooperate", "keep faith", "work with")
 DEFECT = ("i defect", "defect", "betray", "take the larger")
@@ -70,10 +68,6 @@ def reader(*, chat):
                      asks="Did the speaker DECIDE to cooperate? Answer NO if they "
                           "decided to defect. Ignore what they merely considered.",
                      decide=rule, observe=observed)
-
-
-def cases():
-    return labelled(CASES)
 
 
 def probes(config=None):

@@ -170,3 +170,19 @@ def test_a_truncated_reply_neither_answered_nor_declined():
     r = judge(chat).rule(trial)
     assert r.verdict is Verdict.COULD_NOT_JUDGE and "cut off" in r.note
     assert chat.calls == [], "a cut-off reply is refused before anything is spent"
+
+
+def test_probing_a_reader_does_not_hide_which_model_it_reads_with():
+    """`Validated` wraps the judge, and the wrapper has to stay honest about
+    the instrument — otherwise `sep run` prints the reader's endpoint for an
+    UNPROBED judge and nothing for a probed one, which is backwards."""
+    from separatrix import Tier, Validation, Validated, Verdict
+
+    inner = judge(FakeChat("YES"))
+    wrapped = Validated(inner=inner, measured=Validation(tier=Tier.ESTIMATED,
+                                                         verdict=Verdict.PASSED))
+    assert wrapped.chat is inner.chat
+
+    from separatrix import FoldJudge
+    assert Validated(inner=FoldJudge(lambda f: True, id="f@1"),
+                     measured=Validation(tier=Tier.FOLD)).chat is None

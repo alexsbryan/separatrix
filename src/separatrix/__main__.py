@@ -14,7 +14,7 @@ from pathlib import Path
 
 from .cases import harvest
 from .journal import Provenance, Run
-from .study import load_study, resolve
+from .study import load_study
 from .sweep import bracket_from_records, sweep
 from .validate import probe
 
@@ -109,15 +109,12 @@ def _probed(study, override: str | None):
     """The study's judge, paired with what a probe found out about it.
 
     One resolution path for both verbs, so `sep probe` cannot report a judge
-    that `sep run` would not use. `--cases` overrides what the study declares;
-    neither is the same as having none, which leaves the judge NEVER_RAN and
-    unusable — the honest state for an instrument nobody has checked.
+    that `sep run` would not use. Having no cases is not the same as passing:
+    it leaves the judge NEVER_RAN and unusable, which is the honest state for an
+    instrument nobody has checked.
     """
-    ref = override or study.cases_ref
-    if ref is None:
-        return study.judge
-    cases = resolve(ref, root=study.path.parent)
-    return probe(study.judge, cases() if callable(cases) else cases)
+    cases = study.cases(override)
+    return study.judge if cases is None else probe(study.judge, cases)
 
 
 def _render_validation(judge) -> None:
@@ -144,10 +141,10 @@ def _cmd_probe(args) -> int:
     """
     study = load_study(args.study)
     print(f"study     {study.name}   ({study.path.name})")
-    if (args.cases or study.cases_ref) is None:
+    if study.cases(args.cases) is None:
         print("this study declares no labelled cases, so there is nothing to "
-              "probe with. Add `cases = \"module:fn\"` under [study], or pass "
-              "--cases module:fn", file=sys.stderr)
+              "probe with. Declare a [cases] table and `sep harvest` it, or "
+              "point `cases` at a module:fn", file=sys.stderr)
         return 2
     judge = _probed(study, args.cases)
     _render_validation(judge)

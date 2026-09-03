@@ -11,7 +11,6 @@ name    = "telephone"
 judge   = "telephone:judge"
 arena   = "telephone:arena"
 journal = "telephone.jsonl"
-cases   = "telephone:cases"
 
 # The arms are PERSONAS, not the two ends of the sweep. The coordinate here
 # decides who is allowed to speak, not what a speaker says — so the way a judge

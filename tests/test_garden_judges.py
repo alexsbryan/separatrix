@@ -19,13 +19,12 @@ import pytest
 STUDIES = Path(__file__).parent.parent / "studies"
 sys.path.insert(0, str(STUDIES))
 
-from separatrix import Verdict, validate                       # noqa: E402
+from separatrix import Verdict, load_study, validate           # noqa: E402
 
 
 @pytest.fixture(scope="module")
 def cases():
-    import epistemic_garden
-    return epistemic_garden.cases()
+    return load_study(STUDIES / "epistemic_garden.toml").cases()
 
 
 def test_the_labelled_replies_cover_both_arms_and_both_verdicts(cases):
@@ -108,7 +107,8 @@ def test_the_move_reader_is_blind_rather_than_biased():
     """
     import trust_game
 
-    v = validate(trust_game.keyword_judge, trust_game.cases())
+    v = validate(trust_game.keyword_judge,
+                 load_study(STUDIES / "trust_game.toml").cases())
     assert v.verdict is Verdict.COULD_NOT_JUDGE
     assert v.discrimination == 0.0
     assert "cannot separate the classes" in v.note

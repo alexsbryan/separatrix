@@ -9,7 +9,6 @@ name    = "commons"
 judge   = "commons:judge"
 arena   = "commons:arena"
 journal = "commons.jsonl"
-cases   = "commons:cases"
 
 # The arms here are CONFIGS, not genomes: what changes between the two ends of
 # this coordinate is the world an agent is shown, not the disposition it holds.

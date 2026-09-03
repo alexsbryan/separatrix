@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from .client import Chat
+from .cases import labelled
 from .journal import Journal, Provenance
 from .judge import Judge
 from .sweep import Budget, Coordinate, Outcome
@@ -81,6 +82,24 @@ class Study:
     workers: int = 1
     case_source: "CaseSource | None" = None
 
+    def cases(self, override: str | None = None):
+        """The labelled cases this study is probed with, or None if it has none.
+
+        One decider, three sources, in this order: an explicit `--cases` on the
+        command line, a `cases = "module:fn"` in the file, and otherwise the
+        file `[cases] out` already names. The third is what a study normally
+        wants, and before it existed every study module carried a `cases()` that
+        re-spelled a path the TOML had just spelled — two answers to "where are
+        the cases", which is one more than there should be.
+        """
+        ref = override or self.cases_ref
+        if ref is not None:
+            found = resolve(ref, root=self.path.parent)
+            return found() if callable(found) else found
+        if self.case_source is not None:
+            return labelled(self.case_source.path)
+        return None
+
     def journal(self, served: str, judge: Any = None) -> Journal:
         """Open the run's journal.
 
@@ -91,10 +110,15 @@ class Study:
         journal describing something other than what happened.
         """
         judge = judge if judge is not None else self.judge
+        asking = {} if self.coordinate is None else {
+            "coordinate": self.coordinate.name,
+            "lo": self.coordinate.lo, "hi": self.coordinate.hi,
+            "outcome": self.outcome.name, "threshold": self.outcome.threshold,
+            "replicates": self.replicates, "paired": self.paired}
         return Journal(self.journal_path,
                        Provenance(served=served, requested=self.chat.model,
                                   endpoint=self.chat.base_url),
-                       config=dict(self.config),
+                       config=dict(self.config), asking=asking,
                        judge={"id": judge.id,
                               "tier": judge.tier.value,
                               "validation": judge.validation().as_row()})

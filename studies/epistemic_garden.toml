@@ -9,7 +9,6 @@ name    = "epistemic-garden"
 judge   = "epistemic_garden:reader"    # a FACTORY: it reads with a model
 arena   = "epistemic_garden:arena"
 journal = "epistemic-garden-v2.jsonl"
-cases   = "epistemic_garden:cases"
 
 # Where the labelled cases come from. Not invented at a keyboard: the arms are
 # the two dispositions this coordinate actually produces, the probes are the
