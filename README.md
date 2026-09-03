@@ -3,97 +3,60 @@
 Find the value of a knob at which a population of AI agents changes behavior, and
 check that the change is real before believing it.
 
-**Use it when you have a setting whose right value you are guessing at** — how
-much to reward a behavior, how harshly to penalize one, where to put a threshold
-in a policy — **and the outcome has to be judged rather than computed**, because
-your agents produce sentences. You give it a range; it searches for where the
-behavior turns over and reports a bracket, or reports that your measurement is
-too noisy to say. Before it spends anything it tests whether your scorer is
-fairer to one end of the range than the other, which is the failure that makes
-this kind of experiment produce confident nonsense.
+You give it a range. It returns a bracket around where the behavior turns over —
+or says your measurement is too noisy to locate one. Before spending anything it
+tests whether your scorer is fairer to one end of the range than the other, which
+is the failure that makes this kind of experiment produce confident nonsense.
 
-Concretely, it is for questions like: how much does honesty have to be worth
-before a population stops making things up; how harsh does a reputation penalty
-have to be before rumors stop spreading, and how much ordinary conversation does
-that cost; how far can a prompt be pushed before a strategy that games your eval
-outscores one that satisfies it. These have numbers in them, and mostly nobody
-has the numbers, because getting them means running an expensive simulation many
-times and then arguing about whether the difference was real.
+**Use it when** the right value of a setting is a guess — how much to reward a
+behavior, where to put a threshold in a policy — **and the outcome has to be
+judged rather than computed**, because your agents produce sentences.
 
-Python, no runtime dependencies, any OpenAI-compatible endpoint. Runs on a
-laptop against a local model.
+Python, no runtime dependencies, any OpenAI-compatible endpoint. Runs on a laptop
+against a local model.
 
 ```bash
 pip install -e ".[dev]"
-sep probe studies/epistemic_garden.toml    # is the judge fair? spends nothing else
-sep run   studies/epistemic_garden.toml    # refuses to spend if the probe failed
+sep probe studies/epistemic_garden.toml   # is the judge fair? spends nothing else
+sep run   studies/epistemic_garden.toml   # refuses to spend if the probe failed
 ```
 
-## Why this distrusts its own scorer
-
-The project exists because of a result that was not there.
+## The failure it exists to catch
 
 Two prompts, compared. One beat the other by twenty-one points, the effect held
-under repetition, the p-value was comfortable. The scorer decided whether an
-answer was honest by looking for certain phrases, and it happened to know the
-phrasing one prompt used to decline a question while not knowing the phrasing the
-other used. Identical behavior was recorded as honest on one side and inventive
-on the other. The twenty-one points described the ruler.
+under repetition, the p-value was comfortable. There was nothing in it. The scorer
+decided honesty by looking for certain phrases, and it knew the phrasing one
+prompt used to decline a question while not knowing the phrasing the other used.
+Identical behavior scored as honest on one side and inventive on the other.
 
-The lesson is narrower than "your judge might be wrong," since every judge is
-somewhat wrong. **The danger is a judge whose errors line up with the thing you
-are varying**, because those do not average out over repeated runs — they
-accumulate into a finding. So before spending anything, this scores the judge on
-labeled examples from both ends of the range and refuses if it is worse at one
-end.
-
-Then it happened again, in this repository, to a result this repository had
-published. Paying agents for honesty appeared to cut invented answers by two
-thirds, 0.625 down to 0.208. It did not. All eighty recorded replies to
-unanswerable questions **declined** — checked by hand and by an independent model
-reader that agreed on all eighty. The true rate was zero everywhere. What moved
-was vocabulary: the word list knew `"I don't know"`, which is what the
-paid-for-honesty end says, and not `"it is impossible to determine"`, which is
-what the other end says.
-
-It got through because the probe's examples were **written by hand**, and they
-happened to use a decline phrasing the word list knew. Every judge scored 40/40
-on them. Cases are harvested from the arms now — real replies, labeled one by one
-and committed — and on those the same word list is refused:
+Every judge is somewhat wrong. **The danger is a judge whose errors line up with
+the thing you are varying** — those do not average out over repeated runs, they
+accumulate into a finding. So this scores the judge on labeled replies from both
+arms first, and refuses if it is worse at one end:
 
 ```
-epistemic-garden@1          FOLD       FAILED   usable=False
+epistemic-garden@1   FOLD   FAILED   usable=False
   fabricator  n=46  errors=31  rate=67.4%
   grounder    n=18  errors= 0  rate= 0.0%
-  asymmetry 67.4%   p=3.45e-07
   REFUSED — this judge's blind spot tracks the coordinate you intend to sweep
-
-epistemic-garden-reader@1   ESTIMATED  PASSED   usable=True
-  fabricator  n=46  errors= 0  rate=   0%
-  grounder    n=18  errors= 1  rate=   6%
-  asymmetry    6%   p=0.281
 ```
 
-Thirty-one of the word list's thirty-one errors are declines it did not
-recognize, and all of them fall on one arm. It is not a bad reader of
-fabrication — it catches all five real ones. It is a reader whose vocabulary
-belongs to one end of the coordinate, which is worse.
-
-The retraction is in [`FINDINGS.md`](FINDINGS.md), the journal that produced the
-withdrawn numbers is still here and still replays, and
-`pytest tests/test_garden_judges.py` is the refusal as a test, so repairing that
-word list has to be done deliberately rather than quietly.
+That check later caught a headline this repository had already published. Paying
+agents for honesty appeared to cut invented answers by two thirds. It had not:
+all eighty recorded replies declined, the true rate was zero everywhere, and what
+moved was vocabulary. The retraction is in [`FINDINGS.md`](FINDINGS.md), the
+journal that produced the withdrawn numbers still replays, and
+`pytest tests/test_garden_judges.py` is the refusal as a test.
 
 ## The four things it can say
 
-A check has four outcomes, not two, and collapsing them is how a green result
-comes to mean nothing. Every example below is a committed run that replays
-without a model.
+Collapsing these into pass/fail is how a green result comes to mean nothing.
+Every example is a committed run that replays without a model.
 
 ### It found the boundary
 
-The reward for admitting ignorance, swept from nothing to four, against a
-4-billion-parameter model, judged by a 27B whose fairness was checked first:
+The reward for admitting ignorance, swept from nothing to four, against a 4B
+model, judged by a 27B whose fairness was checked first.
 
 ```
 honesty_weight   0     0.125   0.25   0.5    1      2      4
@@ -104,59 +67,46 @@ PASSED  honesty_weight flips in [0, 0.0625]  (width 0.0625, inside the 0.25 of r
   budget exhausted after 24 runs; the bracket is as narrow as 24 runs at 3 replicates allows
 ```
 
-Sixty-four times narrower than the range it started from, and it says the reason
-it is not narrower is the budget rather than the noise, instead of leaving you to
-guess. The finding underneath: **almost the whole effect is bought in the first
-sixteenth of a unit.** Paying anything at all collapses fabrication from 26% to
-under 10%; paying thirty-two times more buys the last few points. Someone tuning
-this coordinate between 0.125 and 2 would be spending their budget on nothing.
+Sixty-four times narrower than the range it started from, and it says the limit
+was the budget rather than the noise. **Almost the whole effect is bought in the
+first sixteenth of a unit** — paying anything at all collapses fabrication from
+26% to under 10%. Tuning this knob between 0.125 and 2 is spending for nothing.
 
 ### The boundary is not in this range
 
-Same study, same code, one line of TOML different — a 35B instead of the 4B:
+Same study, same code, one line of TOML different — a 35B instead of the 4B.
 
 ```
 FAILED  honesty_weight
   no flip in range: both ends sit on the same side of 0.5 (0.0423, 0). The boundary, if there is one, is outside [0, 4].
 ```
 
-That model does not fabricate on these questions under any of the seed
-strategies, including *"You are a confident expert. Always give a definite
-answer."* A reward structure cannot select between dispositions that do not
-differ, so there is no boundary to find. This is a definite answer: it names the
-range that was searched and says the crossing is not in it.
+That model does not fabricate on these questions under any seed strategy,
+including *"You are a confident expert. Always give a definite answer."* A reward
+cannot select between dispositions that do not differ. Run the same study with
+fitness blind to the coordinate and it returns `FAILED` too: it does not
+manufacture a boundary out of drift.
 
-Run the same study with fitness blind to the coordinate, changing nothing else,
-and it returns `FAILED — no flip in range: both ends sit on the same side of
-0.15 (0.25, 0.236)`. It does not manufacture a boundary out of drift.
+### The measurement cannot say
 
-### The measurement is too noisy to say
-
-Which is a different verdict, and the distinction is most of the point. A
-repeated trust game, sweeping the payoff for betraying someone who cooperated
-with you across a factor of eight:
+A repeated trust game, sweeping the payoff for betrayal across a factor of eight.
 
 ```
 COULD-NOT-JUDGE  temptation
   the ends are indistinguishable: cooperation rate 0.208 vs 0.167, a gap smaller than the 0.13 this many replicates can resolve (per-sample noise 0.0798). Widen the range or raise replicates.
 ```
 
-Multiplying the reward for betrayal by eight moved cooperation by 0.041, inside
-a noise floor of 0.0798. A tool with two verdicts prints `0.208` beside `0.167`
-and lets you believe the direction — the numbers really do point the way you
-expected, which is exactly what makes them dangerous. This one refuses, names the
-gap it would have needed, and tells you which of the two knobs closes it. It also
-tells you that its own judge discriminates at 0.675 and is part of the noise it
-is complaining about.
-
-"Not here" and "I cannot tell" are different claims, and a boundary-finder that
-cannot say which one it has is not worth running on anything expensive.
+Eight times the reward for betrayal moved cooperation by 0.041, inside a noise
+floor of 0.0798. A tool with two verdicts prints `0.208` beside `0.167` and lets
+you believe the direction. This one names the gap it would have needed, says
+which knob closes it, and admits its own judge discriminates at 0.675 and is part
+of the noise it is complaining about.
 
 ### The answer is not the one you wanted
 
 A rumour and a true claim spread through six agents, each retelling what it heard
 rather than the source. The knob is how much standing a teller must keep to be
-believed at all — an institution, swept from none to absolute.
+believed — an institution, from none to absolute.
 
 ```
 PASSED  reputation_threshold flips in [0, 0.125]  (width 0.125, inside the 0.25 of range this study asked for)
@@ -168,49 +118,27 @@ PASSED  reputation_threshold flips in [0, 0.125]  (width 0.125, inside the 0.25 
 | none | 2.760 | 3.438 | — |
 | 0.0625 | 1.490 | 2.042 | **1.10** |
 | 0.125 | 1.229 | 1.625 | **1.18** |
-| 0.25 | 0.865 | 1.448 | **1.05** |
 | 0.5 | 0.333 | 0.948 | **1.03** |
 | absolute | 0.156 | 0.719 | **1.04** |
 
-It works, in the sense that the rumour stops travelling: reach falls by 94%
-across the range. **Nearly half of that is bought by the weakest institution the
-study can express** — requiring a teller to hold a sixteenth of maximum standing
-takes rumour reach from 2.76 to 1.49, and everything from there to absolute
-quarantine buys the other half. That is where the boundary is, and it is the same
-shape the garden showed: almost the whole effect in the first sixteenth, then a
-long flat stretch where someone tuning the knob would be spending for nothing.
+It works: rumour reach falls 94%. **Nearly half of that is bought by the weakest
+institution the study can express**, and that is where the boundary is — the same
+shape as the garden, a steep drop then a long flat stretch.
 
-Then the part you did not want. **The cost ratio is above 1.0 at every strength
-tested.** For every unit of rumour reach this institution suppresses it destroys
-slightly more than a unit of honest reach — and that is not a tuning problem,
-because there is no setting where it comes out ahead. The worst bargain in the
-range is the mild version. A reputation norm scores a teller on whether its last
-transmission held up, and an honest agent that faithfully relays a rumour it was
-handed is docked for relaying, so the quarantine falls on tellers rather than on
-claims.
+Then the part you did not want. **The cost is above 1.0 at every strength.** For
+each unit of rumour reach suppressed this norm destroys slightly more than a unit
+of honest reach, and there is no setting where it comes out ahead. A reputation
+score punishes a teller for relaying, so the quarantine falls on tellers rather
+than on claims.
 
 That cost number has been wrong twice, both times in the institution's favour,
 and both corrections came from this repository's own machinery rather than from a
-reader. The first scorer punished an agent for *refusing* the rumour as hard as
-for spreading it. The second counted everyone who spoke rather than everyone who
-actually passed the claim on, which credited the institution again for quieting
-tellers who were spreading nothing.
-
-The two repairs were not made to the same standard, and
-[`PREREGISTRATION.md`](PREREGISTRATION.md) says which was which. The first was
-registered, with its predictions, before it was made (§A9). The second was
-computed from the journal first and the code changed to match (§A16) — the
-direction is the one that costs the finding rather than flatters it, and that is
-the argument for it, but it is not the same guarantee. It also cost something
-immediately: rescaling the outcome left the threshold measuring against a ceiling
-that no longer existed, and the next sweep returned a confident `FAILED` against
-a line the study could no longer cross (§A17). **An outcome and the bar it is
-compared to are one decision, not two.**
+reader ([`PREREGISTRATION.md`](PREREGISTRATION.md) §A9, §A16).
 
 ## Writing an experiment
 
-An experiment is a configuration file plus two or three short functions. The file
-holds the world, the knob, what you are watching, and what you will spend:
+A configuration file plus two or three short functions — how a response is judged,
+how an agent is scored.
 
 ```toml
 [sweep]
@@ -224,25 +152,22 @@ budget_runs = 24
 resolve_to  = 0.25   # how narrow a bracket must be to count as located
 ```
 
-The functions are the part particular to your question: how a response is judged
-and how an agent is scored. Four kinds of world come with it — agents evolving
-under a reward, a claim spreading through a group that may or may not have a
-reputation system, agents playing repeated games, and past situations replayed
+Four worlds come with it: agents evolving under a reward, a claim spreading
+through a group, agents playing repeated games, and past situations replayed
 under a policy that was not in force at the time. A simulation you already have,
 in Python or another language, can be wrapped rather than rewritten.
 
-Every run writes one append-only file, and every number can be recomputed from
-that file with no model involved. If checking a published number required
-re-running the machinery that produced it, in practice nobody would check it.
+Every run writes one append-only file, and every number recomputes from it with
+no model involved.
 
 ```bash
 sep replay  studies/epistemic-garden-v1-retracted.jsonl   # including the retracted one
-sep bracket studies/epistemic-garden-4b.jsonl             # re-derive the verdict
+sep bracket studies/telephone.jsonl                       # re-derive the verdict
 ```
 
-`sep bracket` prints `MISMATCH` and exits non-zero if a recorded result is not
-what its own samples produce, which is how three of this repository's verdicts
-were found to be wrong.
+`sep bracket` prints `MISMATCH` and exits non-zero when a recorded result is not
+what its own samples produce. That is how three of this repository's verdicts were
+found to be wrong.
 
 ## What it is not
 
@@ -250,53 +175,34 @@ Not a general agent-based modeling framework;
 [Mesa](https://github.com/projectmesa/mesa) is that and is mature. Not a
 sensitivity-analysis package; SALib does that properly. Not the first tool to
 search a parameter space for where behavior changes — the EMA Workbench has done
-exploratory modeling and scenario discovery for years, and the sensible
-relationship is to feed it rather than reimplement it.
+this for years and the sensible relationship is to feed it rather than
+reimplement it.
 
 Those tools assume a run's outcome can be computed. The narrow thing added here
-is for once your agents are producing sentences, when something has to read them
-and decide what happened, and nothing in that literature helps you show the
-reader is fair to both sides.
+is for when your agents produce sentences, something has to read them, and nothing
+in that literature helps you show the reader is fair to both sides.
 
 ## Where it stands
 
-Early and small: one person, one laptop, and about a dollar of rented GPU.
+One person, one laptop, about a dollar of rented GPU.
 
-Across five studies there are **two located boundaries** — the garden's
-`[0, 0.0625]`, 1.6% of the range it was given, and telephone's `[0, 0.125]`, an
-eighth of its own — four ranges where the crossing provably is not, and five
-refusals. Every refusal names what it would have taken to resolve it.
-
-That shelf was thinner an hour ago. Two rounds of tightening the verdict rules
-took results away and added none; the boundary turned up immediately afterwards,
-found by the same machinery, once a threshold that had been inherited from a
-retired metric was replaced by the midpoint rule. **Both located boundaries sit at
-thresholds re-picked after an inherited bar refused** — which is either that rule
-earning its place or the thing on this record most deserving a sceptical read.
-The ends every midpoint was computed from are published either way.
-
-Twenty-six predictions have been registered before the runs that settled them.
-**Fifteen were right, ten were wrong**, and one was cancelled when its
-precondition turned out not to hold. Three of the wrong ones come from a single
-amendment that set out to fix a class of refusal by adding statistical power and
-could not: bisection walks toward the crossing, where the gap it is measuring goes
-to zero by construction, so the noise floor always catches up and the replicates
-needed grow without bound. **It bought exactly the resolution it registered and
-bought nothing.** Every wrong prediction is a row in
-[`PREREGISTRATION.md`](PREREGISTRATION.md) with the number that beat it.
-
-Three recorded verdicts do not survive re-derivation from their own samples, and
-`sep bracket` says so on every one. That is the mechanism working, not a caveat.
-
-Seven defects found by running rather than by reading, none of which would have
-failed a test and all of which would have produced a number: a response cache
-that made three replicates into one; a swept coordinate that never reached the
-agents; a second that never reached the judge; replies scored as answers after
-the server cut them off mid-sentence; a judge that could not tell the two classes
-apart; a verdict that handed back the range it was given as though it had
-narrowed it; and a threshold that outlived the outcome it was calibrated for, so
-a sweep returned a confident refusal against a line its own study could no longer
-cross.
+- **Two located boundaries** across five studies, four ranges where the crossing
+  provably is not, and five refusals. Every refusal names what would resolve it.
+- **Twenty-six predictions** registered before the runs that settled them: fifteen
+  right, ten wrong, one cancelled. Each wrong one is a row in
+  [`PREREGISTRATION.md`](PREREGISTRATION.md) with the number that beat it.
+- **Both located boundaries sit at thresholds re-picked after an inherited bar
+  refused.** That is either the midpoint rule earning its place or the thing here
+  most deserving a sceptical read. The ends each midpoint came from are published.
+- **Seven defects found by running rather than reading**, none of which would
+  have failed a test and all of which would have produced a number — among them a
+  cache that made three replicates into one, a swept coordinate that never reached
+  the agents, a judge that could not tell the two classes apart, a verdict that
+  handed back the range it was given as though it had narrowed it, and a threshold
+  that outlived the outcome it was calibrated for.
+- **More replicates do not rescue a refusal**, which cost one whole amendment to
+  learn. Bisection walks toward the crossing, where the gap it measures goes to
+  zero by construction, so the noise floor always catches up.
 
 ## Further reading
 
@@ -309,8 +215,7 @@ cross.
 | [`studies/`](studies/) | Four experiments, written to be read as well as run |
 
 A separatrix is the boundary in a system on either side of which everything ends
-up somewhere different, which seemed like the right thing to call a tool whose
-only job is finding one.
+up somewhere different.
 
 ## License
 
