@@ -412,6 +412,68 @@ all three remains what `The rest of the shelf` already says — whatever verdict
 comes back, published. No study's threshold, budget or replicate count is
 changed by this amendment.
 
+## A11 — the shelf's thresholds were placeholders, and A8's rule is applied to all of them (2026-09-02)
+
+`commons` came back `FAILED — no flip in range` against a threshold of 0.5.
+`trust_game`'s two measured ends are 0.292 and 0.146, which is the same verdict
+before the sweep finishes saying it. Neither 0.5 nor `telephone`'s 3.0 was ever
+argued for: they are defaults, exactly as the garden's 0.5 was — inherited from
+a measurement that has since been retracted, and never a claim about anything
+(`§A8`).
+
+**The rule, which is A8's, restated so it can be applied without judgement.**
+The threshold for the second run is the midpoint of the two ends the study's own
+pilot measured. It is computed from the journal, not chosen; the arithmetic is
+`(mean(lo) + mean(hi)) / 2`.
+
+Computed from the pilots, before those runs:
+
+| study | measured ends | threshold |
+|---|---|---|
+| `commons` | 0.0000, 0.3750 | **0.1875** |
+| `trust_game` | 0.2917, 0.1458 | **0.2188** (hi end has 1 replicate of 3; recomputed when the pilot finishes) |
+| `telephone` | not yet measured | computed from its pilot by the same rule, before its second run |
+
+**Direction: EASIER. This is the amendment to be suspicious of, and here is why
+it is being made anyway.** Re-picking a threshold from the ends a study measured
+guarantees the ends straddle it, so a flip must exist somewhere in the range and
+only noise can stop the search finding it. That is a much weaker claim than
+"there is a boundary here", and the honest description of the second run is not
+a retry of the first: **the two runs ask different questions.** The first asks
+whether the population's fate flips across a line somebody typed. The second
+asks where the population's behaviour changes fastest between the two ends it
+actually reaches. Both are published, both live in the same journal under
+different ids, and **the first verdict is not withdrawn by the second.**
+
+The ordering is the part that deserves naming rather than defending: the re-pick
+was decided AFTER seeing a FAILED, which is the sequence that lets a threshold
+be tuned until a result appears. What stops that here is that the rule is
+mechanical, was written down before it was computed, takes no free parameters,
+and is the same rule already used once on a different study.
+
+**Predictions.**
+
+1. `commons` at 0.1875 returns **PASSED or COULD_NOT_JUDGE, never FAILED.** The
+   ends straddle the threshold by construction, so a FAILED would be
+   arithmetically impossible and would mean a defect rather than a result.
+   Between the two: the hi end's three replicates were 0.531 / 0.219 / 0.375, a
+   spread of 0.3125 and a standard error near 0.09, against a threshold 0.1875
+   from either end — about two to one. **PASSED, with a bracket much wider than
+   the garden's 0.0625.**
+2. `trust_game` at its recomputed threshold returns **PASSED**, and with a
+   narrow bracket: its lo end returned 0.2917 three times with a spread of
+   zero, so if the noise stays there the bisection runs to budget.
+3. `telephone` — no prediction on the verdict. Its pilot has never run and A9
+   already registered `FAILED — no flip in range` for it at 3.0.
+
+**One thing the pilots already showed, which is not a threshold question.** A
+`no flip in range` verdict costs SIX runs, not 24: the search measures both ends
+first and stops as soon as they land on the same side. `commons` spent 6 of a
+budgeted 24 and returned a definite "not here" in four minutes. A sweep that
+refuses cheaply and resolves expensively is the behaviour worth having, and it
+was not designed in — it falls out of measuring the ends before bisecting.
+
+
 
 ---
 
