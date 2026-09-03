@@ -128,7 +128,7 @@ Run the same thing with fitness blind to the coordinate, changing nothing else,
 and it returns `FAILED — no flip in range (0.250, 0.236)`. It does not
 manufacture a boundary out of drift.
 
-## And what it looks like when it cannot answer
+## And what it looks like when there is nothing there
 
 Same study, same code, one line of TOML different — a 35B instead of the 4B:
 
@@ -143,10 +143,64 @@ answer."* Four percent at both ends. A reward structure cannot select between
 dispositions that do not differ, so there is no boundary to find, and the honest
 output is to say which range was searched and that the crossing is not in it.
 
+That is a definite answer. It says the crossing is not in the range, and a
+reader can act on it.
+
+## And what it looks like when it cannot tell
+
+Which is a different verdict, and the distinction is most of the point. A
+repeated trust game, sweeping the payoff for betraying someone who cooperated
+with you across a factor of eight:
+
+```
+COULD-NOT-JUDGE  temptation
+  the ends are indistinguishable: cooperation rate 0.208 vs 0.167, a gap
+  smaller than the 0.13 this many replicates can resolve
+  (per-sample noise 0.0798). Widen the range or raise replicates.
+```
+
+Multiplying the reward for betrayal by eight moved cooperation by 0.041, inside
+a noise floor of 0.0798. A tool with two verdicts prints `0.208` beside `0.167`
+and lets you believe the direction — the numbers really do point the way you
+expected, and that is exactly what makes them dangerous. This one refuses, names
+the gap it would have needed, and tells you which of the two knobs closes it. It
+also tells you that its own judge discriminates at 0.675 and is part of the
+noise it is complaining about.
+
+"Not here" and "I cannot tell" are different claims, and a boundary-finder that
+cannot say which one it has is not worth running on anything expensive.
+
 A tool that declines is worth more than one that always has something to say,
 particularly here, where simulations are cheap to run and easy to fool yourself
 with. This project has the receipts for that: the paragraph you just read
 replaced a table of numbers that turned out to be measuring nothing.
+
+## And what it looks like when the answer is not the one you wanted
+
+A rumour and a true claim spread through the same population of six agents, each
+retelling what it heard rather than the source. The knob is how much standing a
+teller must keep to be believed at all — an institution, swept from none to
+absolute.
+
+```
+reputation_threshold   0.0     0.5     1.0
+true claim reach       5.000   3.167   2.417
+false claim reach      5.000   2.583   1.500
+```
+
+It works. The rumour's reach falls by 70%. It also takes the true claim down
+with it, and the ratio is the finding: **for every unit of false-claim reach the
+institution suppresses, it costs about three quarters of a unit of honest
+reach** — 0.76 at half strength, 0.74 at full. This norm is barely selective. It
+is closer to a blunt censor that catches somewhat more rumour than fact than to
+anything that separates them.
+
+That number survived a repair which could easily have flattered it. The rule
+originally scored an agent that *refused* to pass on the rumour exactly like one
+that spread it, so the institution was punishing honesty and being credited for
+suppression. Fixing that is in [`PREREGISTRATION.md`](PREREGISTRATION.md) §A9,
+it was registered before it was made, and the norm is still only 0.74-selective
+afterwards.
 
 ## What it is
 
