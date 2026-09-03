@@ -136,8 +136,16 @@ def false_reach(rulings):
 
 
 def arena(*, study, journal):
+    """`rounds` is declared in the study file, not fixed here.
+
+    It is the study's power knob and it belongs with the other numbers somebody
+    chose. Reach is a small integer over six agents, averaged across rounds, so
+    rounds is what makes the outcome finer-grained — replicates only average an
+    already-coarse number. `PREREGISTRATION.md` A14.
+    """
     return Diffusion([TRUE, FALSE],
                      [Agent(id=n, genome=g) for n, g in PERSONAS],
                      responder=Responder(study.chat, journal=journal,
                                           workers=study.workers),
-                     rounds=4, depth=5, journal=journal)
+                     rounds=int(study.config.get("rounds", 4)), depth=5,
+                     journal=journal)

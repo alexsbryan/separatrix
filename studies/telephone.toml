@@ -46,6 +46,13 @@ model       = "primary"
 temperature = 0.0
 max_tokens  = 400
 
+# The base world, before the coordinate moves anything. `rounds` is this
+# study's power knob: reach is a small integer over six agents and the outcome
+# is its average across rounds, so rounds is what makes it finer-grained.
+# Replicates only average an already-coarse number. PREREGISTRATION.md A14.
+[config]
+rounds = 4
+
 [sweep]
 # How much standing a teller must keep to be believed. 0 quarantines nobody,
 # which is the no-institution control arm — the same code path, not a branch.

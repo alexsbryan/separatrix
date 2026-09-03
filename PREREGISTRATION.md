@@ -586,6 +586,77 @@ than boundaries. That is a worse-looking shelf and a truer one. The `telephone`
 cost ratio of 0.74 is unaffected — it was never derived from the bracket, and
 `FINDINGS.md` §8 already said the result was not in the bracket.
 
+## A14 — three runs at adequate power, and one study left alone (2026-09-02)
+
+Every refusal on this shelf is noise-limited at three replicates. That is a
+choice nobody defended — three was the default in every study file — and it is
+the reason the shelf reads thin. The arithmetic, from the journals:
+
+| study | why it stopped | the fix |
+|---|---|---|
+| `commons` | the midpoint sat 0.0415 from the bar; resolution was 0.0577 | 9 replicates → 0.0333 |
+| `telephone` | per-sample noise 1.25 on an effect 4.0 wide | `rounds`, not replicates — see below |
+| `trust_game` | ends differ by 0.041; 48 replicates to see it | **not a power problem** |
+
+**Direction: this is NOT the suspicious kind of easier.** It moves no threshold,
+no range and no rule. It buys resolution — more samples of the same world
+against the same bar. An amendment that lowers a hurdle is the one to distrust;
+this one raises the number of measurements taken before a hurdle is judged, and
+it can produce a REFUSAL just as easily, now at a power that means something.
+
+**R1 — `commons` at 0.5, nine replicates.** 0.5 is the bar that means something
+("half the populations end sustainable"), and `§A11` traded it for 0.1875, which
+means nothing to anyone. That trade was registered as suspicious and it was
+still made. This run puts the meaningful bar back and tests it at power. A
+`FAILED` here is worth more than the one already recorded, because that one was
+refused at three replicates and this one will not have been.
+
+**R2 — `commons` at 0.1875, nine replicates.** A11's bar, at the power that
+would have carried its own search past the step that stopped it.
+
+**R3 — `telephone` at sixteen rounds, six replicates.** Reach is a small integer
+over six agents and the outcome is its average across rounds, so **rounds is the
+knob that makes it finer-grained; replicates only average an already-coarse
+number.** `rounds` moves from a magic number in `arena()` to a declared
+`[config]` key in the study file, where the other numbers somebody chose live.
+
+**Sixteen rounds is a DIFFERENT WORLD, not more samples of the same one.** More
+rounds means more reputation updates and a more settled institution, so the
+0.738 cost ratio measured at four rounds and whatever comes back at sixteen are
+not replicates of each other and must not be pooled. Both get reported.
+
+**`trust_game` is deliberately not re-run.** Its ends differ by 0.041 and it
+would take 48 replicates to see that, which is not a power adjustment but an
+admission that the effect is not there or the range is wrong. Its own verdict
+said "widen the range", and widening it is a study redesign. **Redesigning a
+study unattended, to make a shelf look better, is the thing this file exists to
+prevent.** Its COULD-NOT-JUDGE stands.
+
+**Predictions.**
+
+1. **R1: `FAILED`, no flip in range.** Both ends sit far below 0.5 — 0.09 and
+   0.46 — and no amount of power moves a no-flip. If this returns anything else,
+   the ends have moved and the earlier run was measuring something unstable.
+2. **R2: `PASSED`**, with a bracket narrower than 15 (a quarter of [2, 60]).
+   Resolution 0.0333 clears the 0.0415 that stopped it, so it gets past the
+   first step; a later midpoint may still stop it, which is why the bar is a
+   quarter of the range and not a number of decimal places.
+3. **R3: still `COULD-NOT-JUDGE`.** Four times the rounds should roughly halve
+   per-sample noise, 1.25 → about 0.62, giving resolution near 0.51 at six
+   replicates — still larger than the 0.33 gap that stopped the first midpoint.
+   **This run is not expected to find the boundary.** It is expected to produce a
+   cost ratio with tighter error bars, which is the finding `telephone` actually
+   has. A `PASSED` here would be a pleasant surprise and is registered as not
+   expected.
+4. **R3's cost ratio stays between 0.6 and 0.9** (it was 0.759 and 0.738 at four
+   rounds).
+
+Run detached with `setsid`, so it is not a child of any agent session and
+survives one ending. `scripts/power-runs.sh` is the exact sequence, in the
+repository, so the parameter changes are commands rather than edits somebody has
+to reconstruct.
+
+
 
 
 
