@@ -764,6 +764,91 @@ standing rule, and it binds hardest when the change flatters nobody.
 3. No `FAILED` or existing `COULD-NOT-JUDGE` changes: no path from those exists.
 
 
+## A16 — "reach" was three quantities wearing one name (2026-09-03)
+
+`§A15` recorded this and declined to repair it there, on the grounds that
+repairing it moves a published number. It is repaired here, and the number moves.
+
+**Three deciders, one word.** `telephone` measured "reach" in three places and no
+two agreed:
+
+| where | what it counted | ceiling |
+|---|---|---|
+| `false_reach` — the SWEPT outcome | distinct tellers who **ever** spread it | 6 |
+| `Diffusion.mean_reach` / the `reach` record | per-round **adopters** — everyone who spoke | 5 |
+| what `§A9` says reach IS | per-round tellers who **carried** the claim | 5 |
+
+At `reputation_threshold = 0` the first reports 6.0 and the second 5.0 **for the
+same world**. `FINDINGS.md` §8's cost-ratio table — the study's headline, and the
+one result that never depended on a bracket — is built from the second.
+
+**`§A9` repaired one of the three and the repair did not travel.** A9 established
+that a teller who refuses the rumour, or replaces it with what the source
+actually says, is not reach; that landed on the swept outcome and left
+`mean_reach` counting speakers. So the published table credits the institution
+for silencing tellers who were not spreading anything, which is exactly the error
+A9 was written to remove, surviving in the place the headline is computed from.
+
+**The change.** One decider: per-round count of tellers who CARRIED the claim —
+the ungrounded claim relayed unsupported, the grounded claim relayed faithfully,
+which is `grounded == claim.grounded` in one line at the one site that sees the
+ruling. `mean_reach` returns it, the `reach` record carries it, and `false_reach`
+computes the identical quantity from the rulings. Who spoke is still recorded,
+under `spoke`, because it is a real number — it is just not reach.
+
+**A round the institution silenced completely produces no rulings and IS a round
+of zero reach.** Averaging over the rounds that survived reports total suppression
+as reach unchanged. This is not hypothetical and it is not a hypothetical anyone
+else made: the first reconstruction of these numbers in this session dropped
+exactly those rounds and came out 60% high, and was caught only by checking the
+reconstruction against the arena's own record before believing it. `rounds` now
+travels in the ruling facts so the measure cannot be taken over the wrong
+denominator.
+
+**`rounds` was the wrong power knob, and the old outcome is why.** Counting
+distinct-tellers-ever climbs toward the population size as rounds grow — the
+no-institution end read 5.67 at four rounds and **6.00 out of 6 with zero
+variance** at sixteen, pinned against its own ceiling. `§A14` turned `rounds` to
+buy resolution and moved the outcome by turning it. **A knob that moves the
+measurement is not a power knob.** The corrected outcome is a per-round mean and
+does not drift with `rounds`.
+
+**Direction: HARDER, and said plainly — this was computed BEFORE the code
+changed.** The corrected numbers below were derived from the existing journal by
+hand, the code was changed to match, and no prediction was registered in between
+because there was nothing left to predict. What that costs in credibility is
+real; what it buys is that the arithmetic is checkable by anyone holding the
+journal. The direction is the non-suspicious one: every corrected number is worse
+for the institution being studied, and the change takes no result away that was
+earned.
+
+| | published (spoke) | corrected (carried) |
+|---|---|---|
+| 4 rounds, cost ratio @ 0.5 | 0.759 | **0.810** |
+| 4 rounds, cost ratio @ 1.0 | 0.738 | **0.926** |
+| 16 rounds, cost ratio @ 0.5 | 0.984 | **1.046** |
+| 16 rounds, cost ratio @ 0.75, 1.0 | 0.960 | **1.042** |
+
+**A cost ratio above 1.0 means the institution destroys more honest reach than
+rumour reach** — worse than switching it off. That is the sixteen-round result.
+
+**Existing journals replay unchanged**, which is the reason this was safe to do
+at all: `bracket_from_records` reads the recorded `outcome` values and never
+recomputes them, so every published bracket still re-derives from its own
+evidence. The metric change reaches future runs only.
+
+**The one prediction left to settle, and it needs a run.** `telephone` has not
+been re-swept under the corrected outcome. When it is:
+
+1. The corrected `false_reach` in code reproduces the hand-derived numbers above
+   from the journal. If it does not, the code is wrong rather than the table.
+2. The verdict stays `COULD-NOT-JUDGE`. The outcome is now a per-round mean over
+   six agents with a per-value spread near 0.2-0.5, and the ends sit 2.5 apart on
+   a range whose top quarter is a dead zone (`§A15`). A `PASSED` would be a
+   surprise and is registered as not expected.
+3. `trust_game` and the garden are untouched: neither uses this arena.
+
+
 ---
 
 # What landed
@@ -806,11 +891,24 @@ before the run it describes; everything it compares against was.
 | A14 "sixteen rounds is a different world" | registered as a caution, ratios never pooled | **the caution was right** — reach falls from 5.00 to 0.78/0.60, a near-total quarantine, not a finer-grained version of the four-round world |
 | A15 — **not predicted** | — | two of A14's runs changed model mid-flight, 30 calls and 5 calls to a peer, recorded under an **alias**; ruled out as the cause by the R1/R2 internal control |
 | A15 the test suite | nothing fails except by asserting old behaviour | nothing failed; 221 pass, 5 skipped |
+| A15 `telephone` R3 under `resolve_to` | PASSED → COULD-NOT-JUDGE below 0.5 | **changed, and the flip point is exact** — PASSED at 0.5, COULD-NOT-JUDGE at 0.49 |
+| A15 the garden's resolved bracket | survives any `resolve_to` down to 0.02, or the rule is reverted | **survives** — PASSED at 0.02, refused at 0.015, its true width being 0.015625 of the range |
+| A15 FAILED and existing COULD-NOT-JUDGE | no path from those verdicts exists | **unchanged** — all six |
+| A16 the three reach measures | — computed before the change, no prediction registered | 4-round ratio 0.759 → **0.810** and 0.738 → **0.926**; 16-round 0.984 → **1.046** and 0.960 → **1.042** |
+| A16 existing journals | replay unchanged, since re-derivation reads recorded outcomes | **unchanged** — every bracket re-derives from its own evidence |
+| A16 the fake-world tests | two encode the old metric and must be restated, not relaxed | restated: without an institution the rumour **out-travels** the fact (5.00 vs 1.75), which the speaker count read as 5.00 = 5.00 |
+| A16 `telephone` re-swept | NOT RUN — three predictions registered above and unsettled | pending |
 
 Two of the three registered numeric predictions were wrong in a way the data
 explains, and both are recorded that way rather than quietly dropped. The
 prediction that mattered — that P2 would refuse — was written down before the
 verdict existed.
+
+**A15 went three-for-three right**, which is the first amendment on this record to
+do so, and it is worth noticing what kind of predictions those were: two of them
+named a threshold at which a verdict flips and both flip points came back exact.
+A rule whose consequences can be predicted to the decimal is a rule that was
+understood before it was written, which is the difference between this and §A14.
 
 **A14 went three-for-four wrong**, and the one it got right it got right from
 figures that were not the run's own. That is the worst single amendment on this
@@ -839,7 +937,17 @@ Being wrong five times out of nine is not the failure here; not being able to
 say so would have been. Every one of the five is a row above, with the number
 that beat it.
 
-**Not done:** nothing on the shelf is unswept. What remains is named in
-`FINDINGS.md` §Unrun — `telephone` is noise-limited at three replicates, and
-`trust_game`'s reader discriminates at 0.675 and is part of the noise floor that
-stopped its own sweep.
+**Not done, current as of §A16.** Nothing on the shelf is unswept, and two things
+are outstanding. **`telephone` has not been re-swept under the corrected outcome**
+(§A16), so its three predictions are registered and unsettled; the cost ratio does
+not depend on that run, having been derived from the journal it already has.
+**`trust_game`** stands where §A14 left it: its ends differ by 0.041, seeing that
+needs 48 replicates, and its reader discriminates at 0.675 and is itself part of
+the noise floor that stopped its own sweep. Widening its range is a study
+redesign and is still not something to do unattended to make a shelf look better.
+
+**The shelf, after §A15 and §A16: one PASSED across five studies.** The garden's
+`[0, 0.0625]` — 1.6% of its range, on the 4B, at a threshold §A8 re-picked and
+registered — is the only located boundary this repository has. Three FAILED, five
+COULD-NOT-JUDGE. That is a thinner shelf than yesterday's and every step of the
+thinning is a row above.

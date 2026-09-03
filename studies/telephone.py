@@ -119,7 +119,8 @@ def probes(config=None):
 
 
 def false_reach(rulings):
-    """How many agents PASSED ON the claim the source does not support.
+    """Per-round mean of how many agents PASSED ON the claim the source does not
+    support.
 
     A teller that refuses the rumour, or replaces it with what the source
     actually says, is not reach. Until A9 this counted every teller who SPOKE
@@ -129,10 +130,33 @@ def false_reach(rulings):
     Only FAILED counts. A hop the judge could not read is not evidence that the
     rumour travelled, and `COULD_NOT_JUDGE` collapsed into a spreader would be
     an absence reported as a result.
+
+    **PER ROUND, not distinct-tellers-ever (A16).** Counting every teller who
+    ever spread it made the outcome CLIMB WITH `rounds` toward the population
+    size, and `rounds` is exactly the knob A14 turned to buy resolution: at four
+    rounds the no-institution end read 5.67, at sixteen it read 6.00 out of 6
+    with zero variance, pinned against its own ceiling. A power knob that moves
+    the outcome is not a power knob. This is now the same quantity
+    `Diffusion.mean_reach` records, computed the same way, so the sweep and the
+    journal cannot disagree about what reach is.
+
+    A round in which the institution quarantined every chain produces NO rulings
+    and IS a round of zero reach. It has to be counted, or the mean is taken over
+    the rounds that survived and silence reads as absence rather than as the
+    suppression it is — which is why `rounds` travels in the facts.
     """
-    tellers = {r.facts["teller"] for r in rulings
-               if r.facts.get("claim") == "cure" and r.verdict is Verdict.FAILED}
-    return float(len(tellers))
+    rulings = list(rulings)
+    if not rulings:
+        return float("nan")
+    rounds = max((int(r.facts.get("rounds") or 0) for r in rulings), default=0)
+    if not rounds:
+        return float("nan")
+    per_round: dict[int, set] = {}
+    for r in rulings:
+        if r.facts.get("claim") != "cure" or r.verdict is not Verdict.FAILED:
+            continue
+        per_round.setdefault(int(r.facts["round"]), set()).add(r.facts["teller"])
+    return sum(len(per_round.get(rnd, ())) for rnd in range(rounds)) / rounds
 
 
 def arena(*, study, journal):

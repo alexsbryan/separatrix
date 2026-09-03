@@ -443,7 +443,7 @@ the defect in §10 was fixed** — an hour, in this repository's history, during
 which a bracket identical to its own input range was reported as a resolved
 boundary.
 
-## 8. The institution works, and it costs about three quarters of what it buys
+## 8. The institution works, and it costs more honest reach than it buys
 
 `telephone` swept `reputation_threshold` over `[0, 1]` on `Qwen3.6-35B-A3B`,
 after the repair in `PREREGISTRATION.md` §A9 — a hop is scored on what the
@@ -494,52 +494,83 @@ Worth being explicit about what the repair did and did not change: it stopped
 the norm from punishing refusal, and the norm is still only 0.74-selective.
 The defect was real and fixing it did not rescue the institution.
 
-### The same study at sixteen rounds says something stronger, and worse
+**Every number in this section is superseded by the two that follow, and they
+are kept because they are what was published.** The metric above counts who
+spoke; the corrected one counts who carried the claim, and it moves the ratio
+against the institution at four rounds and past 1.0 at sixteen.
+
+### The table above counts who SPOKE, not who carried the claim
+
+`§A9` established the rule: a teller that refuses the rumour, or replaces it with
+what the source actually says, **is not reach**. That repair landed on the swept
+outcome and not on the journal record the table above is built from, which went
+on counting `adopters` — everyone who opened their mouth, refusals and
+corrections included. One name, two deciders, and they disagree by design: at
+`reputation_threshold = 0` the sweep reports 6.0 and the record reports 5.0 for
+the same world. `§A16` collapses them to one.
+
+Counting who **carried** the claim — the rumour relayed unsupported, the fact
+relayed faithfully — the same journal says something different, and worse for the
+institution:
+
+| `reputation_threshold` | true claim | false claim | suppressed | honest reach lost | cost ratio |
+|---|---|---|---|---|---|
+| 0.0 — no institution | 4.167 | 2.667 | — | — | — |
+| 0.5 | 2.750 | 0.917 | 1.750 | 1.417 | **0.810** |
+| 1.0 | 2.083 | 0.417 | 2.250 | 2.084 | **0.926** |
+
+Two things the speaker count was hiding. **Without any institution the rumour
+already travels less far than the fact** (2.67 against 4.17), because a teller
+who garbles the rumour into something the source does not support has not spread
+it — the speaker count scored that as reach. And **the cost ratio is worse than
+published at both strengths**: 0.81 and 0.93 rather than 0.76 and 0.74.
+
+### At sixteen rounds the ratio goes above one
 
 `§A14` re-ran `telephone` with `rounds` raised from four to sixteen, on the
 argument that reach is a small integer over six agents and rounds — not
 replicates — is what makes the outcome finer-grained. **Sixteen rounds is a
-different world and the two are never pooled**, which was registered before the
-run and turned out to be the important sentence in it.
+different world and the two are never pooled**, registered before the run and the
+sentence that turned out to matter.
 
 | `reputation_threshold` | true claim | false claim | suppressed | honest reach lost | cost ratio |
 |---|---|---|---|---|---|
-| 0.0 — no institution | 5.000 | 5.000 | — | — | — |
-| 0.5 | 1.156 | 1.094 | 3.906 | 3.844 | **0.984** |
-| 0.75 | 0.781 | 0.604 | 4.396 | 4.219 | **0.960** |
-| 1.0 | 0.781 | 0.604 | 4.396 | 4.219 | **0.960** |
+| 0.0 — no institution | 3.542 | 2.906 | — | — | — |
+| 0.5 | 0.958 | 0.438 | 2.468 | 2.584 | **1.046** |
+| 0.75 | 0.667 | 0.146 | 2.760 | 2.875 | **1.042** |
+| 1.0 | 0.667 | 0.146 | 2.760 | 2.875 | **1.042** |
 
-Six replicates at each value. The error bars are the thing the run was for and
-they arrived: the per-value spread falls from sd 0.38-0.95 at four rounds to sd
-0.12-0.28 at sixteen.
+Six replicates at each value, and the error bars the run was for did arrive: the
+per-value spread falls from sd 0.38-0.95 at four rounds to sd 0.12-0.28 at
+sixteen.
 
-**The cost ratio is 0.96-0.98, and `§A14` registered it would stay between 0.6
-and 0.9.** That prediction was wrong, and wrong in the direction that matters.
-At four rounds this norm looked *barely* selective — three quarters of a unit of
-honest reach per unit of rumour suppressed. At sixteen, when the institution has
-had time to settle, **it is not selective at all.** It suppresses the true claim
-and the false one at within four percent of the same rate, and with these spreads
-that difference is not distinguishable from zero (t = 1.77 on 6 replicates).
+**A cost ratio above 1.0 means the institution destroys more honest reach than
+rumour reach.** At four rounds this norm is a poor bargain; at sixteen, when it
+has had time to settle, **it is a losing one** — you would do better switching it
+off. The study's question, *does an institution suppress fabrication without
+suppressing fact?*, is answered no at four rounds and worse than no at sixteen.
 
-The four-round table let §8 above say "closer to a blunt censor that happens to
-catch more rumour than fact." **At sixteen rounds the qualifier is gone.** Reach
-falls from 5.00 to 0.78 for the true claim and 0.60 for the false one: the
-settled institution does not separate them, it silences nearly everyone. The
-answer to *does an institution suppress fabrication without suppressing fact?*
-is no at four rounds and emphatically no at sixteen.
+`§A14` registered that this ratio would stay between 0.6 and 0.9. It was wrong on
+the published metric (0.96-0.98) and wrong by more on the corrected one.
 
-Two cautions, both of which are the reader's to weigh:
+Three cautions, all the reader's to weigh:
 
 - **`0.75` and `1.0` are byte-identical, draw for draw** — `[1, 4, 2, 2, 1, 4]`
-  at both. That is not a bug. Draws are paired (common random numbers across
-  coordinate values, `sweep.draw_label`), and the parameter **saturates**: above
-  0.75 no additional teller is ever quarantined, so the trajectories coincide.
-  The consequence is real though — **the top quarter of this study's declared
-  range is a dead zone**, and the sweep spent its stopping decision inside it.
-- **The bracket this run returned, `PASSED [0.5, 1]`, is half the input range**
-  — one bisection step, halted at the same noise floor that returned
-  COULD-NOT-JUDGE for `commons` (`§A15`). It clears `§A13`'s guard by exactly one
-  step. As with the four-round run, **the result here is not in the bracket.**
+  at both. Not a bug: draws are paired (common random numbers across coordinate
+  values, `sweep.draw_label`) and the parameter **saturates** — above 0.75 no
+  additional teller is ever quarantined, so the trajectories coincide. The
+  consequence is real: **the top quarter of this study's declared range is a dead
+  zone**, and the sweep spent its stopping decision inside it.
+- **`rounds` was the wrong power knob, because the old outcome moved with it.**
+  Counting distinct-tellers-ever climbs toward the population size as rounds
+  grow: the no-institution end read 5.67 at four rounds and **6.00 out of 6 with
+  zero variance** at sixteen, pinned against its own ceiling. A knob that moves
+  the outcome is not a power knob. Fixed in `§A16`; the corrected outcome is a
+  per-round mean and does not drift with `rounds`.
+- **The bracket this run returned is `COULD-NOT-JUDGE`** under `§A15`'s rule. It
+  reported `PASSED [0.5, 1]` when it was made — half its own range, one bisection
+  step, halted at the same noise floor that had refused `commons` a step earlier.
+  As at four rounds, **the result here is not in the bracket.**
 
 ## 9. Two ends that are the same number, and the verdict that says so
 

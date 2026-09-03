@@ -172,6 +172,49 @@ def test_a_bracket_that_never_narrowed_is_not_a_pass():
     assert "noise floor" in b.note                   # and it still says why it stopped
 
 
+def test_a_bracket_narrowed_but_not_far_enough_is_not_a_pass():
+    """A13's floor sat exactly one bisection step too low, and A14's R3 landed on
+    it: `PASSED reputation_threshold flips in [0.5, 1]` — half of its own range,
+    one step, halted at the same noise floor that had just refused `commons` a
+    step earlier. Two runs, one stopping cause, two verdicts, decided by when the
+    floor happened to fire.
+
+    So the bar is a fraction of the range and the study declares it.
+    `PREREGISTRATION.md` A15.
+    """
+    arena = RampArena(crossing=0.3, jitter=0.15, seed=11)
+    loose = sweep(arena, _judge(), COORD, Y, budget=Budget(runs=400), replicates=4,
+                  resolve_to=1.0)                       # any narrowing counts (A13's bar)
+    assert loose.verdict is Verdict.PASSED, loose.note
+    assert loose.width < COORD.span                     # it did narrow, by one step
+
+    arena = RampArena(crossing=0.3, jitter=0.15, seed=11)
+    tight = sweep(arena, _judge(), COORD, Y, budget=Budget(runs=400), replicates=4,
+                  resolve_to=loose.width / COORD.span / 2)
+    assert tight.verdict is Verdict.COULD_NOT_JUDGE, tight.note
+    assert "of the range and wider than" in tight.note  # it says what it reached
+    assert "noise floor" in tight.note                  # and still why it stopped
+
+
+def test_the_bar_a_bracket_had_to_reach_is_recorded_on_it():
+    """A verdict that does not carry its own bar cannot be re-argued under a
+    different one, which is the whole reason `resolve_to` is declared per study
+    rather than chosen by the library."""
+    b = sweep(StepArena(flip=0.37), _judge(), COORD, Y,
+              budget=Budget(runs=60), replicates=3, resolve_to=0.4)
+    assert b.resolve_to == 0.4
+    assert b.as_row()["resolve_to"] == 0.4
+
+
+def test_a_bar_outside_zero_to_one_is_refused():
+    """It is a FRACTION of the range. A study that writes 15 meaning "fifteen
+    wide" gets told, rather than silently getting a bar nothing can fail."""
+    for bad in (0, -0.1, 1.5, 15):
+        with pytest.raises(ValueError, match="FRACTION"):
+            sweep(StepArena(), _judge(), COORD, Y, budget=Budget(runs=20),
+                  replicates=3, resolve_to=bad)
+
+
 def test_a_sharp_step_is_right_to_bisect_to_budget():
     """The counterpart. A genuinely sharp boundary can be narrowed as far as the
     budget allows, because no midpoint ever sits ambiguously near the threshold."""

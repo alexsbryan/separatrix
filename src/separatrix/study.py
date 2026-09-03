@@ -23,7 +23,7 @@ from .client import Chat
 from .cases import labelled
 from .journal import Journal, Provenance
 from .judge import Judge
-from .sweep import Budget, Coordinate, Outcome
+from .sweep import DEFAULT_RESOLVE_TO, Budget, Coordinate, Outcome
 
 __all__ = ["Study", "CaseSource", "load_study", "resolve"]
 
@@ -76,6 +76,7 @@ class Study:
     budget: Budget
     replicates: int
     paired: bool
+    resolve_to: float
     config: Mapping[str, Any]
     journal_path: Path
     cases_ref: str | None = None
@@ -114,7 +115,8 @@ class Study:
             "coordinate": self.coordinate.name,
             "lo": self.coordinate.lo, "hi": self.coordinate.hi,
             "outcome": self.outcome.name, "threshold": self.outcome.threshold,
-            "replicates": self.replicates, "paired": self.paired}
+            "replicates": self.replicates, "paired": self.paired,
+            "resolve_to": self.resolve_to}
         return Journal(self.journal_path,
                        Provenance(served=served, requested=self.chat.model,
                                   endpoint=self.chat.base_url),
@@ -202,6 +204,7 @@ def load_study(path: str | Path) -> Study:
                       per_run_calls=(sweep_cfg or {}).get("per_run_calls")),
         replicates=int((sweep_cfg or {}).get("replicates", 3)),
         paired=bool((sweep_cfg or {}).get("paired", True)),
+        resolve_to=float((sweep_cfg or {}).get("resolve_to", DEFAULT_RESOLVE_TO)),
         config=dict(doc.get("config", {})),
         journal_path=root / study.get("journal", f"{study.get('name', 'study')}.jsonl"),
         # The probe is not an optional extra a caller has to remember on the

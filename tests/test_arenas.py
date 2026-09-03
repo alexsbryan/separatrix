@@ -71,25 +71,51 @@ def test_reputation_falls_on_bad_transmissions_and_recovers_on_good_ones():
 
 # ── the institution as a coordinate ─────────────────────────────────────────
 
-def test_no_institution_lets_a_fabrication_reach_as_far_as_a_fact():
+def test_no_institution_lets_a_fabrication_out_travel_a_fact():
     """Diffusion is about believability, not veracity. With nothing adjudicating
-    adoption, both claims reach the whole chain."""
+    adoption, both claims are SPOKEN by the whole chain — and they do not travel
+    equally, which the speaker count could not see.
+
+    Until A16 `mean_reach` counted everyone who spoke, so this asserted
+    `5.0 == 5.0` and read as "a fabrication reaches as far as a fact". What it
+    was actually measuring is that nobody is silenced. Counting who CARRIED the
+    claim, the rumour reaches the whole chain and the true claim reaches barely
+    a third of it: an embellishing teller corrupts a fact into something its
+    source does not support, and a corrupted fact is not the fact arriving.
+    The fabrication does not merely keep up. It out-travels the truth.
+    """
     a = arena()
     a.run({"reputation_threshold": 0.0}, judge())
-    assert a.mean_reach("cure") == a.mean_reach("orchids") == 5.0
+    spoke = {c: sum(v) / len(v) for c, v in a.spoke.items()}
+    assert spoke["cure"] == spoke["orchids"] == 5.0        # nobody is silenced
+    assert a.mean_reach("cure") == 5.0                     # the rumour arrives intact
+    assert a.mean_reach("orchids") == 1.75                 # the fact mostly does not
 
 
 def test_the_institution_suppresses_the_false_claim_selectively():
-    """The result the whole arena exists to measure: false reach collapses while
-    true reach is barely touched."""
+    """The result the whole arena exists to measure: the institution costs less
+    honest reach than the rumour reach it buys.
+
+    The assertion is the FINDING, not a number. A bound like "below 2.5" depends
+    on alpha, depth and rounds; **a cost ratio below 1** is the claim — under it
+    the institution destroys less truth than falsehood, over it the norm is worse
+    than doing nothing — and a different configuration should still have to
+    satisfy it.
+
+    Worth knowing while reading this fixture: it PASSES here, at 0.26, and the
+    live 35B at sixteen rounds comes out at 1.04. The scripted personas make this
+    institution look selective and the real ones do not. `FINDINGS.md` §8.
+    """
+    free = arena()
+    free.run({"reputation_threshold": 0.0}, judge())
     a = arena()
     a.run({"reputation_threshold": 0.7}, judge())
-    false_reach, true_reach = a.mean_reach("cure"), a.mean_reach("orchids")
 
-    # The assertion is the FINDING, not a number. A bound like "below 2.5"
-    # depends on alpha, depth and rounds; selectivity is the claim, and a
-    # different configuration should still have to satisfy it.
-    assert false_reach < true_reach / 2
+    suppressed = free.mean_reach("cure") - a.mean_reach("cure")
+    honest_lost = free.mean_reach("orchids") - a.mean_reach("orchids")
+    assert suppressed > 0                                  # it does suppress
+    assert honest_lost / suppressed < 1                    # and it is net-selective
+    assert a.mean_reach("cure") < free.mean_reach("cure") / 2
 
 
 def test_the_institution_costs_honest_diffusion_and_the_cost_is_computable():

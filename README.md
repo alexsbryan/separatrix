@@ -195,23 +195,34 @@ reach** — 0.76 at half strength, 0.74 at full. This norm is barely selective. 
 is closer to a blunt censor that catches somewhat more rumour than fact than to
 anything that separates them.
 
+Those two numbers are what was published and they are both too kind to the
+institution. What the rest of this section corrects, and why, is below.
+
 That number survived a repair which could easily have flattered it. The rule
 originally scored an agent that *refused* to pass on the rumour exactly like one
 that spread it, so the institution was punishing honesty and being credited for
 suppression. Fixing that is in [`PREREGISTRATION.md`](PREREGISTRATION.md) §A9,
-it was registered before it was made, and the norm is still only 0.74-selective
-afterwards.
+it was registered before it was made, and the norm was still only 0.74-selective
+afterwards — on a metric that, as it turned out, had not received the same
+repair.
 
-**Then the same study was re-run at sixteen rounds instead of four, and the
-qualifier disappeared.** A settled institution is the case worth asking about,
-and there the cost ratio is **0.96-0.98**: true and false claims suppressed at
-within four percent of the same rate, a difference these spreads cannot separate
-from zero. Reach falls from 5.00 to 0.78 and 0.60. It does not sort claims; it
-silences almost everyone. [`PREREGISTRATION.md`](PREREGISTRATION.md) §A14
-registered that this ratio would stay between 0.6 and 0.9 — **that prediction was
-wrong**, and it is one of three of four wrong in that amendment. The four-round
-and sixteen-round numbers are different worlds and are never pooled, which §A14
-also said before the run.
+**Then two things happened to that number, and it got worse both times.**
+
+The metric was counting who SPOKE, not who carried the claim — the same
+distinction §A9 had already repaired on the swept outcome and not here. A teller
+who refuses the rumour, or garbles it into something the source does not support,
+has not spread it. Counting carriers, the four-round cost ratio is **0.81 and
+0.93**, not 0.76 and 0.74.
+
+Then the study was re-run at sixteen rounds instead of four, because a settled
+institution is the case worth asking about. There the cost ratio is **1.04** —
+**above one, meaning the institution destroys more honest reach than rumour
+reach.** It is not a poor bargain at that point; it is a losing one, and you
+would do better switching it off.
+[`PREREGISTRATION.md`](PREREGISTRATION.md) §A14 registered that this ratio would
+stay between 0.6 and 0.9 — **that prediction was wrong**, one of three of four
+wrong in that amendment. The four-round and sixteen-round numbers are different
+worlds and are never pooled, which §A14 also said before the run.
 
 The sweep itself returned `COULD-NOT-JUDGE` on this one: the ends straddle the
 threshold, so the crossing is in there, and three replicates could not say

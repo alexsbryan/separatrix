@@ -44,6 +44,13 @@ from .verdict import Ruling, Verdict
 __all__ = ["Coordinate", "Outcome", "Budget", "Forecast", "Bracket", "Arena",
            "Search", "sweep", "bracket_from_records", "draw_label"]
 
+#: The fraction of its own range a bracket must reach to count as a located
+#: boundary. A study overrides it with `[sweep] resolve_to`. A quarter is where
+#: §A14 already set the bar in prose when it registered what R2 had to beat;
+#: §A15 made it the rule and gave it a home in the study file.
+DEFAULT_RESOLVE_TO = 0.25
+
+
 
 class Arena(Protocol):
     """Produces judged trials for one configuration. The expensive half."""
@@ -153,6 +160,7 @@ class Bracket:
     samples: int = 0
     ends: Mapping[str, float] = field(default_factory=dict)
     note: str = ""
+    resolve_to: float | None = None      # the bar this bracket had to reach
 
     @property
     def width(self) -> float:
@@ -162,7 +170,10 @@ class Bracket:
         head = f"{self.verdict}  {self.coordinate}"
         if self.verdict is not Verdict.PASSED:
             return f"{head}\n  {self.note}"
-        return (f"{head} flips in [{self.lo:g}, {self.hi:g}]  (width {self.width:g})\n"
+        bar = ("" if self.resolve_to is None
+               else f", inside the {self.resolve_to:g} of range this study asked for")
+        return (f"{head} flips in [{self.lo:g}, {self.hi:g}]  (width {self.width:g}"
+                f"{bar})\n"
                 f"  noise {self.noise:.4g} at threshold {self.threshold:g}; "
                 f"{self.samples} runs\n  {self.note}")
 
@@ -170,7 +181,8 @@ class Bracket:
         return {"verdict": self.verdict.value, "coordinate": self.coordinate,
                 "lo": self.lo, "hi": self.hi, "width": self.width, "noise": self.noise,
                 "threshold": self.threshold, "samples": self.samples,
-                "ends": dict(self.ends), "note": self.note}
+                "ends": dict(self.ends), "note": self.note,
+                "resolve_to": self.resolve_to}
 
 
 def _within_group_sd(*groups: Sequence[float]) -> float:
@@ -229,9 +241,14 @@ class Search:
     """
 
     def __init__(self, coordinate: Coordinate, outcome: Outcome, replicates: int,
-                 max_runs: int | None = None):
+                 max_runs: int | None = None, resolve_to: float = DEFAULT_RESOLVE_TO):
         self.coord, self.outcome = coordinate, outcome
         self.replicates, self.max_runs = replicates, max_runs
+        if not 0 < resolve_to <= 1:
+            raise ValueError(f"resolve_to must be in (0, 1], got {resolve_to!r}: it is "
+                             f"the FRACTION of its own range a bracket must reach to "
+                             f"count as located")
+        self.resolve_to = resolve_to
         self.lo, self.hi = coordinate.lo, coordinate.hi
         self.spent = 0
         self.noise: float | None = None
@@ -322,31 +339,45 @@ class Search:
     # ── the answer ──────────────────────────────────────────────────────────
 
     def _finish(self, note: str, verdict: Verdict = Verdict.PASSED) -> None:
-        # A PASSED that never narrowed the range is not a resolved boundary.
-        # The noise-floor branch calls this without a verdict, and it can fire
-        # on the FIRST bisection step — the midpoint lands within the
-        # resolution of the threshold, so neither `lo` nor `hi` is ever
-        # assigned and the bracket handed back is the one handed in. Both
-        # halves of that are true and only one of them was being said: the ends
-        # do straddle, so a flip IS in there somewhere, and nothing whatever
-        # has been localised. Reported as PASSED it wore the same word as a
-        # bracket sixty-four times narrower than its own range.
+        # A PASSED that did not localise anything is not a resolved boundary.
+        # The noise-floor branch calls this without a verdict and can fire on
+        # ANY step, including the first — the midpoint lands within the
+        # resolution of the threshold, the search halts, and whatever bisection
+        # happened to be holding is handed back wearing the word PASSED. Both
+        # halves are true and only one was being said: the ends do straddle, so
+        # a flip IS in there, and a bracket that is most of its own range has
+        # located nothing.
         #
-        # It was not a corner case. It is what this repo's first live result
-        # did, and two of the four studies on the shelf besides.
-        # PREREGISTRATION.md A13.
-        if verdict is Verdict.PASSED and self.lo <= self.coord.lo and self.hi >= self.coord.hi:
+        # A13 caught only the extreme of that — a bracket still spanning the
+        # FULL range — and the floor turned out to sit exactly one bisection
+        # step too low. A14's R3 returned width 0.5 of a range of 1 and passed;
+        # R2 halted at the same noise floor one step earlier and was refused.
+        # Two runs, one stopping cause, two different verdicts, decided by an
+        # off-by-one in when the floor fired. PREREGISTRATION.md A15.
+        #
+        # So the bar is a FRACTION OF THE RANGE, and it is declared per study in
+        # `[sweep] resolve_to` rather than chosen here as a constant — the same
+        # move §A8 and §A11 made for thresholds, and for the same reason: a bar
+        # somebody registers before a run is worth more than one the library
+        # picked afterwards.
+        if verdict is Verdict.PASSED and self.hi - self.lo > self.resolve_to * self.coord.span:
             verdict = Verdict.COULD_NOT_JUDGE
+            reached = ("the search stopped before narrowing that at all, so this "
+                       "locates nothing"
+                       if self.lo <= self.coord.lo and self.hi >= self.coord.hi else
+                       f"the search reached [{self.lo:g}, {self.hi:g}], which is "
+                       f"{(self.hi - self.lo) / self.coord.span:.0%} of the range and "
+                       f"wider than the {self.resolve_to:.0%} this study asked for")
             note = (f"the ends straddle {self.outcome.threshold:g}, so a flip is "
-                    f"somewhere in [{self.coord.lo:g}, {self.coord.hi:g}] — but the "
-                    f"search stopped before narrowing that at all, so this locates "
-                    f"nothing. {note}")
+                    f"somewhere in [{self.coord.lo:g}, {self.coord.hi:g}] — but "
+                    f"{reached}. {note}")
         keep_span = verdict is not Verdict.PASSED
         self._done = Bracket(
             verdict=verdict, coordinate=self.coord.name,
             lo=self.coord.lo if keep_span else self.lo,
             hi=self.coord.hi if keep_span else self.hi,
             noise=self.noise, threshold=self.outcome.threshold, samples=self.spent,
+            resolve_to=self.resolve_to,
             ends={f"{self.coord.lo:g}": statistics.fmean(self._lo_vals) if self._lo_vals else float("nan"),
                   f"{self.coord.hi:g}": statistics.fmean(self._hi_vals) if self._hi_vals else float("nan")},
             note=note)
@@ -368,6 +399,7 @@ def sweep(
     budget: Budget,
     replicates: int = 5,
     paired: bool = True,
+    resolve_to: float = DEFAULT_RESOLVE_TO,
     config: Mapping[str, Any] | None = None,
     journal: Journal | None = None,
     on_forecast: Callable[[Forecast], None] | None = None,
@@ -416,7 +448,8 @@ def sweep(
             f"replicates are one draw copied and the noise floor below is not "
             f"the sampler's.", RuntimeWarning, stacklevel=2)
 
-    search = Search(coordinate, outcome, replicates, max_runs=budget.runs)
+    search = Search(coordinate, outcome, replicates, max_runs=budget.runs,
+                    resolve_to=resolve_to)
     while (value := search.next()) is not None:
         ys = []
         for rep in range(replicates):
@@ -439,7 +472,8 @@ def sweep(
 
 
 def bracket_from_records(records: Iterable[Mapping[str, Any]], *, threshold: float,
-                         name: str = "outcome") -> Bracket:
+                         name: str = "outcome",
+                         resolve_to: float = DEFAULT_RESOLVE_TO) -> Bracket:
     """Re-derive a bracket from journalled samples. No model, no endpoint.
 
     The driver that pays nothing. It replays recorded samples through the same
@@ -472,7 +506,7 @@ def bracket_from_records(records: Iterable[Mapping[str, Any]], *, threshold: flo
     values = [v for v, _ in groups]
     coord = Coordinate(coord_name, min(values), max(values))
     replicates = len(groups[0][1])
-    search = Search(coord, outcome, replicates)
+    search = Search(coord, outcome, replicates, resolve_to=resolve_to)
     for value, ys in groups:
         if search.next() is None:
             break

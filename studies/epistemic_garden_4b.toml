@@ -61,5 +61,10 @@ name        = "fabrication rate"
 # a retracted measurement and was never a claim about anything. Both runs live
 # in the same journal, under different ids, because they ask different questions.
 threshold   = 0.15
+# How narrow a bracket has to be, as a FRACTION of this coordinate's range,
+# before it counts as a located boundary. A quarter is the library default; it
+# is written here because a bar somebody registered before a run is worth more
+# than one the library picked afterwards. PREREGISTRATION.md A15.
+resolve_to  = 0.25
 replicates  = 3
 budget_runs = 24

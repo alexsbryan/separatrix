@@ -15,7 +15,7 @@ from pathlib import Path
 from .cases import harvest
 from .journal import Provenance, Run
 from .study import load_study
-from .sweep import bracket_from_records, sweep
+from .sweep import DEFAULT_RESOLVE_TO, bracket_from_records, sweep
 from .validate import probe
 
 __all__ = ["main"]
@@ -89,8 +89,21 @@ def _cmd_bracket(args) -> int:
             return 2
         threshold = float(recorded["threshold"])
 
+    # The bar the run was JUDGED against, not the library default. A study that
+    # declared `resolve_to = 0.1` and is re-derived at 0.25 gets a verdict nobody
+    # ran, which is the same class of error as re-deriving against the wrong
+    # threshold. Older journals predate the field and fall back to the default.
+    resolve_to = args.resolve_to
+    if resolve_to is None:
+        resolve_to = (run.header.get("asking") or {}).get("resolve_to")
+    if resolve_to is None and recorded is not None:
+        resolve_to = recorded.get("resolve_to")
+    if resolve_to is None:
+        resolve_to = DEFAULT_RESOLVE_TO
+
     derived = bracket_from_records(run.other, threshold=threshold,
-                                   name=args.name or "outcome")
+                                   name=args.name or "outcome",
+                                   resolve_to=float(resolve_to))
     if args.json:
         print(json.dumps(derived.as_row(), indent=2))
     else:
@@ -244,7 +257,8 @@ def _cmd_run(args) -> int:
 
         bracket = sweep(arena, judge, study.coordinate, study.outcome,
                         budget=study.budget, replicates=study.replicates,
-                        paired=study.paired, config=study.config, journal=journal,
+                        paired=study.paired, resolve_to=study.resolve_to,
+                        config=study.config, journal=journal,
                         on_forecast=lambda f: print(f"forecast  "
                                                     f"{f.render(study.coordinate)}"))
     print()
@@ -269,6 +283,9 @@ def main(argv=None) -> int:
     bracket.add_argument("--threshold", type=float, help="the line the outcome had to cross")
     bracket.add_argument("--name", help="outcome name, for the rendering")
     bracket.add_argument("--run", help="which run in the journal (default: the last)")
+    bracket.add_argument("--resolve-to", dest="resolve_to", type=float,
+                         help="fraction of the range a bracket must reach to count as "
+                              "located (default: what the run declared)")
     bracket.add_argument("--json", action="store_true")
     bracket.set_defaults(fn=_cmd_bracket)
 

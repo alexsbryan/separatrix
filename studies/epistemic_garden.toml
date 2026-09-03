@@ -61,5 +61,10 @@ hi          = 4.0
 outcome     = "epistemic_garden:fabrication_rate"
 name        = "fabrication rate"
 threshold   = 0.5
+# How narrow a bracket has to be, as a FRACTION of this coordinate's range,
+# before it counts as a located boundary. A quarter is the library default; it
+# is written here because a bar somebody registered before a run is worth more
+# than one the library picked afterwards. PREREGISTRATION.md A15.
+resolve_to  = 0.25
 replicates  = 3
 budget_runs = 24

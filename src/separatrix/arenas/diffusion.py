@@ -84,7 +84,8 @@ class Diffusion:
         self.rounds, self.depth = rounds, depth
         self.journal = journal
         self.seed = seed
-        self.reach: dict[str, list[int]] = {}
+        self.reach: dict[str, list[int]] = {}      # per round: who CARRIED the claim
+        self.spoke: dict[str, list[int]] = {}      # per round: who spoke at all
 
     def draw(self, label: str) -> None:
         """Begin a new draw. Every replicate is a fresh one, so nothing this
@@ -98,11 +99,12 @@ class Diffusion:
         reputation = Reputation()
         rulings: list[Ruling] = []
         self.reach = {c.id: [] for c in self.claims}
+        self.spoke = {c.id: [] for c in self.claims}
 
         for rnd in range(self.rounds):
             for claim in self.claims:
                 chain = rng.sample(self.population, min(self.depth, len(self.population)))
-                heard, adopters = claim.statement, set()
+                heard, adopters, carriers = claim.statement, set(), set()
 
                 for hop, teller in enumerate(chain):
                     standing = reputation.of(teller.id)
@@ -129,9 +131,19 @@ class Diffusion:
                         facts={**dict(ruling.facts), "claim": claim.id, "hop": hop,
                                "teller": teller.id, "round": rnd,
                                "claim_grounded": claim.grounded,
+                               "rounds": self.rounds,
                                "standing": round(standing, 4)}))
                     reputation.update(teller.id, grounded)
                     adopters.add(teller.id)
+                    # The claim TRAVELLED only if the retelling still asserts it:
+                    # a grounded claim carried faithfully (the judge passes it),
+                    # an ungrounded one relayed unsupported (the judge fails it).
+                    # A teller who refuses, or who replaces the rumour with what
+                    # the source actually says, is not reach — A9 established that
+                    # for the swept outcome and this is the same rule, in the one
+                    # place that now decides it. PREREGISTRATION.md A16.
+                    if grounded == claim.grounded:
+                        carriers.add(teller.id)
                     heard = response.text          # the next agent hears the DRIFT
 
                     if self.journal:
@@ -140,18 +152,31 @@ class Diffusion:
                                           verdict=ruling.verdict.value,
                                           statement=heard[:400])
 
-                self.reach[claim.id].append(len(adopters))
+                self.reach[claim.id].append(len(carriers))
+                self.spoke[claim.id].append(len(adopters))
 
         if self.journal:
             self.journal.note("reach", threshold=threshold,
                               per_claim={c: rounds for c, rounds in self.reach.items()},
                               mean={c: (sum(v) / len(v) if v else 0.0)
                                     for c, v in self.reach.items()},
+                              spoke={c: (sum(v) / len(v) if v else 0.0)
+                                     for c, v in self.spoke.items()},
                               reputation=dict(sorted(reputation.scores.items())))
         return rulings
 
     # ── what a sweep measures ───────────────────────────────────────────────
 
     def mean_reach(self, claim_id: str) -> float:
+        """Per-round mean of how many tellers CARRIED the claim.
+
+        Until A16 this counted `adopters` — everyone who spoke, refusals and
+        corrections included — while the swept outcome counted only spreaders.
+        Two quantities, one name, and they disagreed: 5.0 and 6.0 for the same
+        world. `FINDINGS.md`'s cost-ratio table was built on the speaker count,
+        which credits the institution for silencing tellers who were not
+        spreading anything. Who spoke is still recorded, under `spoke`, because
+        it is a real number — it is just not reach.
+        """
         rounds = self.reach.get(claim_id) or []
         return sum(rounds) / len(rounds) if rounds else float("nan")

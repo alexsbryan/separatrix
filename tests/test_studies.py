@@ -53,3 +53,46 @@ def test_a_shipped_study_declares_a_journal_and_a_budget(path):
     assert study.journal_path.name.endswith(".jsonl")
     assert study.budget.runs >= 2 * study.replicates, (
         "a budget below 2x replicates cannot even measure noise")
+
+
+# ── telephone's outcome, and the zero it must not drop ───────────────────────
+
+def _hop(claim, teller, rnd, verdict, *, rounds=4, grounded=False):
+    from separatrix import Ruling
+    return Ruling(verdict=verdict, trial_id=f"{claim}-{teller}-{rnd}", judge="j@1",
+                  facts={"claim": claim, "teller": teller, "round": rnd,
+                         "claim_grounded": grounded, "rounds": rounds})
+
+
+def test_a_round_the_institution_silenced_completely_is_a_round_of_zero_reach():
+    """A round in which every chain was quarantined produces NO rulings. Averaging
+    over the rounds that survived turns total suppression into an absence and
+    reports it as reach unchanged — the mean of [2] and the mean of [2, 0] are
+    not the same number, and the second is the one that happened.
+
+    This is not hypothetical: the first reconstruction of `telephone`'s cost
+    ratio in this repo dropped exactly these rounds and came out 60% high.
+    `PREREGISTRATION.md` A16.
+    """
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent / "studies"))
+    from telephone import false_reach
+
+    spread_every_round = [_hop("cure", t, r, Verdict.FAILED)
+                          for r in range(4) for t in ("Ada", "Boro")]
+    assert false_reach(spread_every_round) == 2.0
+
+    # Same spreading, but the institution silenced rounds 2 and 3 entirely.
+    silenced_half = [_hop("cure", t, r, Verdict.FAILED)
+                     for r in range(2) for t in ("Ada", "Boro")]
+    assert false_reach(silenced_half) == 1.0        # not 2.0
+
+
+def test_a_teller_that_refuses_the_rumour_is_not_reach():
+    """A9's rule, still enforced after A16 moved the count per-round."""
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent / "studies"))
+    from telephone import false_reach
+
+    refused = [_hop("cure", "Ada", r, Verdict.PASSED, rounds=2) for r in range(2)]
+    assert false_reach(refused) == 0.0

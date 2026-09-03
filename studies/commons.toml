@@ -43,5 +43,10 @@ name        = "sustainable share"
 # chosen. The value it replaced was a default nobody argued for, and the
 # pilot's verdict against that default stands in the same journal.
 threshold = 0.1875
+# How narrow a bracket has to be, as a FRACTION of this coordinate's range,
+# before it counts as a located boundary. A quarter is the library default; it
+# is written here because a bar somebody registered before a run is worth more
+# than one the library picked afterwards. PREREGISTRATION.md A15.
+resolve_to  = 0.25
 replicates = 9
 budget_runs = 90
