@@ -424,19 +424,104 @@ never a claim about anything, exactly as `§A8` says of the garden's. A
 the same verdict against a line somebody argued for, and the honest reading is
 "not in [2, 60] against a half-of-runs bar", not "regeneration does not matter".
 
+## 8. The institution works, and it costs about three quarters of what it buys
+
+`telephone` swept `reputation_threshold` over `[0, 1]` on `Qwen3.6-35B-A3B`,
+after the repair in `PREREGISTRATION.md` §A9 — a hop is scored on what the
+teller SAID against the source, so an agent that refuses to pass on the rumour
+is no longer counted as having spread it, and no longer loses standing for
+refusing. The reader was probed on re-labelled cases first: PASSED,
+discrimination 0.958, 1 error in 35, no arm asymmetry (p = 0.31).
+
+```
+PASSED  reputation_threshold flips in [0, 1]  (width 1)
+  noise 1.247 at threshold 3; 9 runs
+  stopped at the noise floor
+```
+
+**Read that PASSED with its width beside it.** The bracket is the entire input
+range: the ends straddle the threshold, so a flip does exist in there, and
+nothing whatever was localised. Beside the garden's PASSED at width 0.0625 —
+sixty-four times narrower than ITS range — this one has not earned the same
+word. `§A12` records that as a defect in the verdict logic rather than dressing
+it up here.
+
+**The result is not in the bracket. It is in what the sweep journalled on the
+way.** Mean reach per claim, three replicates at each end:
+
+| `reputation_threshold` | true claim | false claim | suppressed | honest reach lost | cost ratio |
+|---|---|---|---|---|---|
+| 0.0 — no institution | 5.000 | 5.000 | — | — | — |
+| 0.5 | 3.167 | 2.583 | 2.417 | 1.833 | **0.759** |
+| 1.0 | 2.417 | 1.500 | 3.500 | 2.583 | **0.738** |
+
+The reputation norm does suppress the rumour: false-claim reach falls from 5.00
+to 1.50, a cut of 70%. **And it takes the true claim down with it**, from 5.00
+to 2.42. For every unit of false-claim reach the institution suppresses, it
+costs about three quarters of a unit of honest reach — 0.76 at half strength,
+0.74 at full.
+
+So the study's question — *does an institution suppress fabrication without
+suppressing fact?* — has an answer here, and the answer is **no.** This norm is
+barely selective. It is closer to a blunt censor that happens to catch more
+rumour than fact than to an instrument that separates them. The mechanism is
+visible in the journal: a global reputation scores a teller on whether its last
+transmission held up, and an honest agent that faithfully relays a rumour it was
+handed is docked for relaying, so the quarantine falls on tellers rather than on
+claims. 34 quarantine events, 20 of them at full strength.
+
+Worth being explicit about what the repair did and did not change: it stopped
+the norm from punishing refusal, and the norm is still only 0.74-selective.
+The defect was real and fixing it did not rescue the institution.
+
+## 9. Two ends that are the same number, and the verdict that says so
+
+`trust_game` swept `temptation` over `[1, 8]` at a reward of 3, punishment 1,
+sucker 0.
+
+```
+COULD-NOT-JUDGE  temptation
+  the ends are indistinguishable: cooperation rate 0.208 vs 0.167, a gap
+  smaller than the 0.13 this many replicates can resolve
+  (per-sample noise 0.0798). Widen the range or raise replicates.
+```
+
+**This is the verdict the whole four-valued scheme exists for.** Multiplying the
+payoff for betraying a cooperator by eight moved the cooperation rate by 0.041,
+against a noise floor of 0.0798. A two-valued tool reports 0.208 versus 0.167
+and lets a reader take the direction seriously. This one reports that it cannot
+tell, names the gap it would have needed, and says which of the two knobs would
+close it.
+
+It is **not** a finding that temptation does not matter. It is the statement
+that this run cannot distinguish that from the alternative, which is a different
+and smaller claim, and the only one the samples support.
+
+One thing outside the verdict and worth recording. At `temptation` 1.0 this is
+not a prisoner's dilemma at all — mutual cooperation pays 3 where mutual
+defection pays 1 — and cooperation still ran at about a fifth. These agents are
+following the disposition in their seed prompt considerably more than the payoff
+matrix in their context. That is a hypothesis this study is now shaped to test
+and has not tested; it is recorded as an observation about the level, not about
+the boundary.
+
+The reader that produced these rulings is also the weakest instrument on the
+shelf: PASSED, but discrimination 0.675 with errors of 25% and 14% across the
+two arms, at a minimum detectable asymmetry of 25%. Some of the 0.0798 is the
+judge. A tighter reader is the other way to close this gap, and the probe is
+what says so.
+
 ## Unrun
 
-`telephone` has not been swept. Its rule was repaired first
-(`PREREGISTRATION.md` §A9) — a hop is scored on what the teller SAID against the
-source, not on which claim it was handed — and its labelled cases were re-read
-under that rule, because they had been labelled under the broken one. The
-repaired reader is probed and PASSED (discrimination 0.958, 1 error of 35,
-asymmetry 9% at p=0.31, minimum detectable asymmetry 27%). No number.
+Nothing on the shelf is unswept. What is unfinished is narrower and is named
+where it belongs rather than here:
 
-`trust_game`'s sweep was interrupted after 4 of 24 runs and has no bracket. What
-the four samples show is recorded here only as the state the journal is in, and
-not as a result: cooperation 0.292 at `temptation` 1.0 across three replicates
-and 0.146 at 8.0 on one. The three replicates agreeing to sixteen decimal places
-is NOT the cache defect of `§6` — separation is on, 22 of the 30 re-asked
-situations came back with different text, and the moves are stable while the
-prose varies. Nothing is claimed from four samples.
+- `commons` is re-running at the threshold `§A11` computed from its own pilot
+  (0.1875). Its pilot verdict against the inherited 0.5 stands either way, in
+  the same journal under the same run.
+- `trust_game`'s A11 re-run was **cancelled**, not skipped: its two ends are
+  indistinguishable, so the midpoint between them would be a bar manufactured
+  from noise. `§A12` records the reasoning; COULD-NOT-JUDGE is its result.
+- `telephone` is noise-limited at three replicates, not threshold-limited. More
+  replicates, or a narrower reach metric, is the way in — the same lever `§P2`
+  needed, and neither was spent here.
