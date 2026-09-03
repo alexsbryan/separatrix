@@ -393,8 +393,50 @@ The gate is watched failing: in `tests/test_draws.py` the pre-fix arena measures
 a noise floor of exactly **0.0** in a sampler that alternates its answer on
 every call.
 
+## 7. A commons whose objective never mentions sustainability does not find it
+
+`commons` swept `regeneration` over `[2, 60]` on `Qwen3.6-35B-A3B`, 24 runs, its
+fold judge probed clean first (discrimination 1.0, 0 errors on either arm, at a
+minimum detectable asymmetry of 36%).
+
+```
+FAILED  regeneration
+  no flip in range: both ends sit on the same side of 0.5 (0, 0.375).
+  The boundary, if there is one, is outside [2, 60].
+```
+
+Re-derived from the journal with `sep bracket studies/commons.jsonl`, which
+agrees with what the live sweep recorded.
+
+**This is a definite result, not a failure to get one.** At a regeneration rate
+of 2 the pool is stripped by every population; at 60 — thirty times faster, and
+far above any harvest the agents can sustain — 37.5% of runs end sustainable and
+the rest still collapse. Multiplying the resource's recovery by thirty does not
+buy a sustainable commons, because **this study's fitness rewards units taken and
+never consults sustainability at all.** The agents are optimising the thing they
+are scored on. That is the oldest result in the commons literature arriving in a
+population of language agents, and the sweep locates it as an absence: there is
+no regeneration rate in the swept range at which the incentive stops mattering.
+
+**What it does not say.** The threshold of 0.5 is an inherited default and was
+never a claim about anything, exactly as `§A8` says of the garden's. A
+`no flip in range` verdict against a placeholder line is a weaker result than
+the same verdict against a line somebody argued for, and the honest reading is
+"not in [2, 60] against a half-of-runs bar", not "regeneration does not matter".
+
 ## Unrun
 
-The sweeps for `commons`, `telephone` and `trust_game` have not been run against
-a model. Their judges have been probed on real replies, which is a different and
-smaller claim, and it is the only one made for them here.
+`telephone` has not been swept. Its rule was repaired first
+(`PREREGISTRATION.md` §A9) — a hop is scored on what the teller SAID against the
+source, not on which claim it was handed — and its labelled cases were re-read
+under that rule, because they had been labelled under the broken one. The
+repaired reader is probed and PASSED (discrimination 0.958, 1 error of 35,
+asymmetry 9% at p=0.31, minimum detectable asymmetry 27%). No number.
+
+`trust_game`'s sweep was interrupted after 4 of 24 runs and has no bracket. What
+the four samples show is recorded here only as the state the journal is in, and
+not as a result: cooperation 0.292 at `temptation` 1.0 across three replicates
+and 0.146 at 8.0 on one. The three replicates agreeing to sixteen decimal places
+is NOT the cache defect of `§6` — separation is on, 22 of the 30 re-asked
+situations came back with different text, and the moves are stable while the
+prose varies. Nothing is claimed from four samples.
