@@ -5,10 +5,15 @@
 # RELAYING something ungrounded, not only for inventing it, so honest agents pay
 # — and with no persona variation it is not selective at all. Report the cost
 # (honest reach lost per unit of fabrication suppressed), not just the suppression.
+#
+# The rule was repaired before this was ever swept: PREREGISTRATION.md A9. A hop
+# is scored on what the teller SAID against the source, not on which claim it was
+# handed, and the labelled cases were re-read under that rule because they had
+# been labelled under the broken one.
 
 [study]
 name    = "telephone"
-judge   = "telephone:judge"
+judge   = "telephone:reader"
 arena   = "telephone:arena"
 journal = "telephone.jsonl"
 
@@ -29,6 +34,17 @@ vivid   = "You love a vivid story. Make what you pass along more impressive, wit
 model      = "primary"
 max_tokens = 300   # 120 cut the vivid persona off mid-retelling
 workers    = 2    # a wall-clock setting; the calls made are identical at any value
+
+# The reader. It is the same model that produces the replies, which is the
+# arrangement A7 REFUSED once already — a 4B could not read a 4B's replies and
+# the probe said so at p = 0.001. There are two models on this host and the
+# other is that 4B, so this is the better of the two available and not a claim
+# that it is fit. `sep probe` decides that, and the sweep does not run if it
+# says no.
+[judge]
+model       = "primary"
+temperature = 0.0
+max_tokens  = 400
 
 [sweep]
 # How much standing a teller must keep to be believed. 0 quarantines nobody,
